@@ -26,6 +26,7 @@ export function Inbox() {
   const { data, locale, t } = useEduFlow();
   const [busy, setBusy] = useState<string | null>(null);
   const [notice, setNotice] = useState("");
+  const [copiedId, setCopiedId] = useState<string | null>(null);
   if (!data) return null;
   const record = data;
   const actions = dailyActions(data);
@@ -255,19 +256,25 @@ export function Inbox() {
                       </p>
                     ) : null}
                     <p className="mt-3 whitespace-pre-wrap text-sm leading-7">{approval.text}</p>
-                    <div className="mt-3">
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
                       <CopyButton
                         text={approval.text}
                         label={t("copyChannel")}
                         copiedLabel={t("copied")}
-                        onCopied={() =>
+                        onCopied={() => {
+                          setCopiedId(approval.id);
                           logActivity(
                             "copied",
                             `نُسخ نص ${name} ولم يُرسل.`,
                             `Copied the text for ${name}. It was not sent.`,
-                          )
-                        }
+                          );
+                        }}
                       />
+                      {copiedId === approval.id ? (
+                        <span className="rounded-full bg-teal px-3 py-1 text-sm font-semibold text-white" role="status">
+                          {t("copied")}
+                        </span>
+                      ) : null}
                     </div>
                   </div>
                 ) : null}

@@ -204,12 +204,13 @@ export function CopyButton({
   return (
     <button
       type="button"
-      className={cn(buttonClass.secondary, "px-3 py-2", className)}
+      aria-live="polite"
+      className={cn(done ? buttonClass.primary : buttonClass.secondary, "min-w-28 px-3 py-2", className)}
       onClick={() => {
         setDone(true);
-        window.setTimeout(() => setDone(false), 8000);
+        window.setTimeout(() => setDone(false), 12000);
         void copyText(text);
-        onCopied?.();
+        window.setTimeout(() => onCopied?.(), 0);
       }}
     >
       {done ? copiedLabel : label}
