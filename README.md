@@ -5,7 +5,7 @@
 وكيل متابعة الواجبات للمدارس الخاصة ومراكز التدريب في الإمارات والسعودية.  
 An assignment follow-up agent for private schools and training centers in the UAE and Saudi Arabia.
 
-The app opens straight into a seeded teacher workspace. There is no login. Edits stay in the browser. Reminder messages and the weekly summary are drafts to review and copy. Nothing is sent automatically.
+The app opens on a short introduction, then a seeded teacher workspace. There is no login. Edits stay in the browser. The agent proposes a daily plan and drafts messages for the teacher to approve and copy. Nothing is sent automatically.
 
 ---
 
@@ -13,21 +13,29 @@ The app opens straight into a seeded teacher workspace. There is no login. Edits
 
 ### What it is
 
-EduFlow Agent is a demo for Dubai’s Create AI Agents Championship. A coordinator sees classes, students, and homework, updates who submitted, and asks the agent to draft:
+EduFlow Agent is a demo for Dubai’s Create AI Agents Championship. A coordinator sees who is late across a Dubai school and a Riyadh center, and the agent prepares the next message for approval.
 
-- a reminder to a late or missing student, and a matching note to their parent, in Arabic or English
-- a weekly class summary that names who still needs follow-up
-
-If `OPENAI_API_KEY` is set, drafts are written with OpenAI. If it is missing, or the call fails, the same screens fill in with realistic templates so the demo still works.
+If `OPENAI_API_KEY` is set, drafts are written with OpenAI. If it is missing, or the call fails, the same screens fill in with realistic templates so the demo still works. The key stays on the server.
 
 ### Features
 
+- A landing screen that states the problem and the value for UAE and Saudi schools
 - Arabic interface (right to left) by default, with an English toggle (left to right)
-- Classes, students, and assignments, including due dates
-- A submission table per assignment: submitted, late, or not submitted, plus a teacher note
-- Draft-only reminders and a weekly performance summary
-- Seeded demo: 2 classes, 15 students, 4 assignments, mixed statuses
+- Due dates judged in Asia/Dubai or Asia/Riyadh, not the browser’s clock
+- Classes, students, and assignments, including a submission table: on time, late, or not submitted
+- An agent inbox: daily plan, risk scores from patterns across assignments, and one-click approval
+- Tone (formal or friendly) and channel-ready text for WhatsApp, email, or SMS
+- A short activity log of what the agent noticed, approved, or copied
+- Dashboard impact: estimated time saved, and an on-time submission trend
+- Weekly summary drafts
+- Seeded story: 2 classes, 15 students, 6 assignments, one student who recovered and several who did not
 - Reset demo data, stored in `localStorage` (no database, safe on Vercel’s read-only filesystem)
+- An About / Limits page: what is built, what is planned, data handling, and an estimated cost per task
+- A reliability check and an activity log, including refusals
+
+Simulated pieces are labeled in the interface. Class records are fictional. WhatsApp, email, and SMS are text you copy; nothing is delivered. There is no login. Open the site, and use Reset demo data to restore the story. Judges can keep using that link for the whole championship.
+
+The on-time rate is calculated from the seeded record. Minutes saved and the model cost are estimates, marked as such. With no API key, one follow-up draft costs nothing to generate. With `gpt-4o-mini`, a student-and-parent draft is estimated at under 0.01 AED from public prices, not from a measured bill.
 
 ### Run locally
 
@@ -75,23 +83,29 @@ Vercel detects Next.js. No `vercel.json` and no database are required. After the
 
 ### ما هو التطبيق
 
-EduFlow Agent نموذج لبطولة صناعة وكلاء الذكاء الاصطناعي في دبي. يساعد المعلمة أو منسقة المتابعة في المدارس الخاصة ومراكز التدريب على متابعة الواجبات: ترى الصفوف والطلاب، تحدّث حالة التسليم، ثم تطلب من الوكيل صياغة مسودات.
+EduFlow Agent نموذج لبطولة صناعة وكلاء الذكاء الاصطناعي في دبي. ترى المنسقة من تأخر في مدرسة بدبي ومركز في الرياض، ويجهّز الوكيل الرسالة التالية بانتظار موافقتها.
 
-المسودات نوعان:
-
-- رسالة تذكير للطالب المتأخر أو لمن لم يسلّم، ورسالة مقابلة لولي الأمر، بالعربية أو بالإنجليزية
-- ملخص أسبوعي لأداء الصف يسمّي من يحتاج متابعة
-
-إذا وُجد `OPENAI_API_KEY` تُصاغ المسودة عبر OpenAI. إذا غاب المفتاح أو تعذّر الاتصال، تظهر قوالب واقعية وبالأسماء نفسها حتى يكتمل العرض.
+إذا وُجد `OPENAI_API_KEY` تُصاغ المسودة عبر OpenAI. إذا غاب المفتاح أو تعذّر الاتصال، تظهر قوالب واقعية وبالأسماء نفسها حتى يكتمل العرض. المفتاح يبقى على الخادم ولا يصل إلى المتصفح.
 
 ### المزايا
 
+- شاشة تعريف تشرح المشكلة والقيمة لمدارس الإمارات والسعودية
 - واجهة عربية من اليمين إلى اليسار افتراضياً، مع تبديل إلى الإنجليزية من اليسار إلى اليمين
-- إضافة الصفوف والطلاب والواجبات مع تاريخ الاستحقاق
-- جدول تسليم لكل واجب: تم التسليم، متأخر، أو لم يُسلّم، مع ملاحظة للمعلم
-- تذكيرات وملخص أسبوعي على شكل مسودات للمراجعة والنسخ فقط
-- بيانات تجريبية جاهزة: صفّان، 15 طالباً، 4 واجبات بحالات مختلطة
+- مواعيد التسليم تُحسب بتوقيت آسيا/دبي أو آسيا/الرياض، لا بساعة المتصفح
+- الصفوف والطلاب والواجبات، مع جدول تسليم: في الموعد، متأخر، أو لم يُسلّم
+- صندوق الوكيل: خطة اليوم، درجة مخاطر من نمط الطالب عبر الواجبات، واعتماد بضغطة واحدة
+- نبرة رسمية أو ودّية، ونص جاهز لواتساب أو البريد أو رسالة قصيرة
+- سجل قصير لما رصده الوكيل أو اعتُمد أو نُسخ
+- أثر على لوحة التحكم: تقدير الوقت الموفّر، ومنحنى التسليم في الموعد
+- ملخص أسبوعي على شكل مسودة
+- قصة تجريبية: صفّان، 15 طالباً، 6 واجبات، وطالبة عادت إلى الموعد وطلاب تكرر تأخرهم
 - زر إعادة البيانات التجريبية. الحفظ في `localStorage` داخل المتصفح، بلا قاعدة بيانات، ويعمل على نظام ملفات Vercel للقراءة فقط
+- صفحة الحدود: ما يعمل، وما هو مخطط، وكيف تُحفظ البيانات، وتقدير تكلفة المهمة
+- فحص موثوقية وسجل نشاط يشمل حالات التوقف
+
+ما هو محاكى مكتوب في الواجهة. سجلات الصفوف خيالية. واتساب والبريد والرسالة القصيرة نص يُنسخ ولا يُسلَّم. لا تسجيل دخول. افتح الموقع، وزر إعادة البيانات التجريبية يعيد القصة. يمكن للحكام إبقاء الرابط مفتوحاً حتى نهاية البطولة.
+
+نسبة التسليم في الموعد محسوبة من السجل التجريبي. الدقائق الموفّرة وتكلفة النموذج تقديرات ومُعلَّمة كذلك. بلا مفتاح، صياغة المسودة لا تكلف شيئاً. مع `gpt-4o-mini` تقدير مسودة الطالب وولي الأمر أقل من 0.01 درهم حسب الأسعار العلنية، لا حسب فاتورة مقاسة.
 
 ### التشغيل محلياً
 

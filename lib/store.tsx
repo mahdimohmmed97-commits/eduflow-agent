@@ -4,16 +4,22 @@ import { useSyncExternalStore } from "react";
 import { translate, type MessageKey } from "@/lib/i18n";
 import { createSeed } from "@/lib/seed";
 import { todayIso } from "@/lib/dates";
+import { zoneOf } from "@/lib/dates";
 import type {
+  ActivityKind,
   Assignment,
+  Audience,
+  Channel,
   DemoData,
   Locale,
   SchoolClass,
   Student,
   SubmissionStatus,
+  Tone,
 } from "@/lib/types";
 
-const STORAGE_KEY = "eduflow-agent-v1";
+const STORAGE_KEY = "eduflow-agent-v2";
+const STORAGE_VERSION = 2;
 const LOCALE_KEY = "eduflow-locale";
 
 type Listener = () => void;
@@ -43,7 +49,12 @@ function isDemoData(value: unknown): value is DemoData {
     Array.isArray(data.classes) &&
     Array.isArray(data.students) &&
     Array.isArray(data.assignments) &&
-    Array.isArray(data.submissions)
+    Array.isArray(data.submissions) &&
+    Array.isArray(data.activity) &&
+    Array.isArray(data.approvals) &&
+    Array.isArray(data.trend) &&
+    (data.tone === "formal" || data.tone === "friendly") &&
+    (data.channel === "whatsapp" || data.channel === "email" || data.channel === "sms")
   );
 }
 
@@ -62,7 +73,7 @@ function getSnapshot(): DemoData | null {
   if (raw) {
     try {
       const parsed = JSON.parse(raw) as { version?: number; data?: unknown };
-      if (parsed.version === 1 && isDemoData(parsed.data)) data = parsed.data;
+      if (parsed.version === STORAGE_VERSION && isDemoData(parsed.data)) data = parsed.data;
     } catch {
       data = seed();
     }
@@ -89,7 +100,7 @@ function getLocaleServer(): Locale {
 }
 
 function write(data: DemoData) {
-  const raw = JSON.stringify({ version: 1 as const, data });
+  const raw = JSON.stringify({ version: STORAGE_VERSION, data });
   localStorage.setItem(STORAGE_KEY, raw);
   dataCache = { key: raw, data };
   emit();
@@ -122,6 +133,98 @@ export function setLocale(locale: Locale) {
 export function resetDemo() {
   seedMemo = null;
   write(createSeed());
+}
+
+export function ensureStored() {
+  if (typeof window === "undefined") return;
+  let raw: string | null = null;
+  try {
+    raw = localStorage.getItem(STORAGE_KEY);
+  } catch {
+    return;
+  }
+  if (!raw) {
+    write(seed());
+    return;
+  }
+  try {
+    const parsed = JSON.parse(raw) as { version?: number; data?: unknown };
+    if (parsed.version !== STORAGE_VERSION || !isDemoData(parsed.data)) write(seed());
+  } catch {
+    write(seed());
+  }
+}
+
+function remember(
+  data: DemoData,
+  kind: ActivityKind,
+  textAr: string,
+  textEn: string,
+) {
+  data.activity.unshift({
+    id: uid("act"),
+    at: new Date().toISOString(),
+    kind,
+    textAr,
+    textEn,
+  });
+  data.activity = data.activity.slice(0, 40);
+}
+
+export function setTone(tone: Tone) {
+  update((data) => {
+    data.tone = tone;
+  });
+}
+
+export function setChannel(channel: Channel) {
+  update((data) => {
+    data.channel = channel;
+  });
+}
+
+export function logActivity(kind: ActivityKind, textAr: string, textEn: string) {
+  update((data) => remember(data, kind, textAr, textEn));
+}
+
+export function recordApproval(input: {
+  studentId: string;
+  assignmentId: string;
+  tone: Tone;
+  channel: Channel;
+  audience: Audience;
+  text: string;
+  subject: string;
+  source?: "openai" | "template" | "local";
+  textAr: string;
+  textEn: string;
+}) {
+  update((data) => {
+    data.approvals = data.approvals.filter(
+      (item) =>
+        !(
+          item.studentId === input.studentId &&
+          item.assignmentId === input.assignmentId &&
+          item.audience === input.audience &&
+          item.channel === input.channel &&
+          item.tone === input.tone
+        ),
+    );
+    data.approvals.unshift({
+      id: uid("appr"),
+      studentId: input.studentId,
+      assignmentId: input.assignmentId,
+      tone: input.tone,
+      channel: input.channel,
+      audience: input.audience,
+      text: input.text,
+      subject: input.subject,
+      source: input.source,
+      approvedAt: new Date().toISOString(),
+    });
+    data.approvals = data.approvals.slice(0, 80);
+    remember(data, "approved", input.textAr, input.textEn);
+  });
 }
 
 export function addClass(input: Omit<SchoolClass, "id">) {
@@ -172,6 +275,7 @@ export function deleteClass(id: string) {
     data.submissions = data.submissions.filter(
       (item) => !assignmentIds.has(item.assignmentId) && !studentIds.has(item.studentId),
     );
+    data.approvals = data.approvals.filter((item) => !studentIds.has(item.studentId) && !assignmentIds.has(item.assignmentId));
   });
 }
 
@@ -179,6 +283,7 @@ export function deleteStudent(id: string) {
   update((data) => {
     data.students = data.students.filter((item) => item.id !== id);
     data.submissions = data.submissions.filter((item) => item.studentId !== id);
+    data.approvals = data.approvals.filter((item) => item.studentId !== id);
   });
 }
 
@@ -186,6 +291,7 @@ export function deleteAssignment(id: string) {
   update((data) => {
     data.assignments = data.assignments.filter((item) => item.id !== id);
     data.submissions = data.submissions.filter((item) => item.assignmentId !== id);
+    data.approvals = data.approvals.filter((item) => item.assignmentId !== id);
   });
 }
 
@@ -202,7 +308,18 @@ export function setSubmission(
     row.status = patch.status;
     if (patch.status === "not_submitted") row.submittedOn = "";
     if ((patch.status === "submitted" || patch.status === "late") && !row.submittedOn) {
-      row.submittedOn = todayIso();
+      const assignment = data.assignments.find((item) => item.id === assignmentId);
+      row.submittedOn = todayIso(zoneOf(data.classes, assignment?.classId ?? ""));
+    }
+    const student = data.students.find((item) => item.id === studentId);
+    const assignment = data.assignments.find((item) => item.id === assignmentId);
+    if (student && assignment) {
+      remember(
+        data,
+        "status",
+        `تم تحديث حالة ${student.nameAr} في «${assignment.titleAr}».`,
+        `Updated ${student.nameEn} on “${assignment.titleEn}”.`,
+      );
     }
   });
 }

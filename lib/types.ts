@@ -4,6 +4,14 @@ export type Gender = "female" | "male";
 
 export type SubmissionStatus = "submitted" | "late" | "not_submitted";
 
+export type GulfTimeZone = "Asia/Dubai" | "Asia/Riyadh";
+
+export type Tone = "formal" | "friendly";
+
+export type Channel = "whatsapp" | "email" | "sms";
+
+export type Audience = "student" | "parent";
+
 export type SchoolClass = {
   id: string;
   nameAr: string;
@@ -16,6 +24,7 @@ export type SchoolClass = {
   schoolEn: string;
   cityAr: string;
   cityEn: string;
+  timeZone: GulfTimeZone;
 };
 
 export type Student = {
@@ -47,11 +56,44 @@ export type Submission = {
   note: string;
 };
 
+export type ActivityKind = "plan" | "approved" | "copied" | "status" | "summary" | "test" | "refused";
+
+export type ActivityEntry = {
+  id: string;
+  at: string;
+  kind: ActivityKind;
+  textAr: string;
+  textEn: string;
+};
+
+export type Approval = {
+  id: string;
+  studentId: string;
+  assignmentId: string;
+  tone: Tone;
+  channel: Channel;
+  audience: Audience;
+  text: string;
+  subject: string;
+  source?: "openai" | "template" | "local";
+  approvedAt: string;
+};
+
+export type WeekPoint = {
+  weeksAgo: number;
+  onTimeRate: number;
+};
+
 export type DemoData = {
   classes: SchoolClass[];
   students: Student[];
   assignments: Assignment[];
   submissions: Submission[];
+  activity: ActivityEntry[];
+  approvals: Approval[];
+  tone: Tone;
+  channel: Channel;
+  trend: WeekPoint[];
 };
 
 export const TEACHER = {

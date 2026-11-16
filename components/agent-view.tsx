@@ -5,24 +5,28 @@ import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { ContentSkeleton } from "@/components/skeletons";
 import { Button, CopyButton, PageIntro, buttonClass, inputClass } from "@/components/ui";
+import { ActivityLog } from "@/components/activity-log";
+import { Inbox } from "@/components/inbox";
 import {
-  localResult,
-  type AgentRequest,
-  type AgentResult,
   type ReminderDraft,
   type ReminderRequest,
   type SummaryRequest,
 } from "@/lib/agent";
+import { runAgent, type ShownSource } from "@/lib/client-agent";
 import type { MessageKey } from "@/lib/i18n";
-import { formatDate, isPastDue } from "@/lib/dates";
-import { useEduFlow } from "@/lib/store";
+import { formatDate, isPastDue, zoneOf } from "@/lib/dates";
+import { logActivity, useEduFlow } from "@/lib/store";
 import { classOnTimeRate, listFollowUps, tally } from "@/lib/stats";
 import { givenName, tx } from "@/lib/text";
 import { TEACHER, type DemoData, type Locale } from "@/lib/types";
 
 type Translator = (key: MessageKey) => string;
-type ShownSource = "openai" | "template" | "local";
-type Tab = "reminders" | "summary";
+type Tab = "inbox" | "reminders" | "summary" | "log";
+
+function tabFromQuery(value: string | null): Tab {
+  if (value === "reminders" || value === "summary" || value === "log" || value === "inbox") return value;
+  return "inbox";
+}
 
 export function AgentView() {
   const { data, locale, t } = useEduFlow();
@@ -40,7 +44,7 @@ export function AgentView() {
   const record = data;
 
   const query = params.toString();
-  const requestedTab: Tab = params.get("tab") === "summary" ? "summary" : "reminders";
+  const requestedTab = tabFromQuery(params.get("tab"));
   const tab = tabDraft && tabDraft.query === query ? tabDraft.tab : requestedTab;
   const draftLocale = languageChoice ?? locale;
   const followUps = listFollowUps(data);
@@ -52,7 +56,7 @@ export function AgentView() {
   const assignment = data.assignments.find((item) => item.id === assignmentId) ?? null;
   const flagged = followUps.filter((item) => item.assignment.id === assignmentId);
   const selectedIds = picked && picked.assignmentId === assignmentId ? picked.ids : flagged.map((item) => item.student.id);
-  const reminderKey = `${assignmentId}:${[...selectedIds].sort().join(",")}:${draftLocale}`;
+  const reminderKey = `${assignmentId}:${[...selectedIds].sort().join(",")}:${draftLocale}:${data.tone}`;
   const visibleReminders = reminders && reminders.key === reminderKey ? reminders : null;
 
   const summaryRequest = buildSummary(data, draftLocale, classChoice);
@@ -67,6 +71,11 @@ export function AgentView() {
     const outcome = await runAgent(request);
     const drafts = outcome.result.kind === "reminders" ? outcome.result.drafts : [];
     setReminders({ key: reminderKey, source: outcome.source, drafts });
+    logActivity(
+      "plan",
+      `صيغت مسودات تذكير لـ«${tx(locale, assignment.titleAr, assignment.titleEn)}». لم تُرسل.`,
+      `Drafted reminders for “${tx(locale, assignment.titleEn, assignment.titleEn)}”. Nothing was sent.`,
+    );
     setLoading(false);
   }
 
@@ -76,6 +85,7 @@ export function AgentView() {
     const outcome = await runAgent(summaryRequest);
     const text = outcome.result.kind === "summary" ? outcome.result.summary : "";
     setSummary({ key: summaryKey, source: outcome.source, text });
+    logActivity("summary", "صيغ ملخص الأسبوع للمراجعة. لم يُرسل.", "Drafted the weekly summary for review. It was not sent.");
     setLoading(false);
   }
 
@@ -102,8 +112,13 @@ export function AgentView() {
         </div>
       </div>
 
-      <div className="mb-5 flex gap-2" role="tablist" aria-label={t("tabAria")}>
-        {(["reminders", "summary"] as const).map((item) => (
+      <div className="mb-5 flex flex-wrap gap-2" role="tablist" aria-label={t("tabAria")}>
+        {([
+          ["inbox", "tabInbox"],
+          ["reminders", "tabReminders"],
+          ["summary", "tabSummary"],
+          ["log", "tabLog"],
+        ] as const).map(([item, key]) => (
           <button
             key={item}
             type="button"
@@ -112,12 +127,16 @@ export function AgentView() {
             onClick={() => setTabDraft({ query, tab: item })}
             className={tab === item ? buttonClass.primary : buttonClass.secondary}
           >
-            {item === "reminders" ? t("tabReminders") : t("tabSummary")}
+            {t(key)}
           </button>
         ))}
       </div>
 
-      {data.assignments.length === 0 ? (
+      {tab === "inbox" ? (
+        <Inbox />
+      ) : tab === "log" ? (
+        <ActivityLog />
+      ) : data.assignments.length === 0 ? (
         <p className="rounded-3xl border border-dashed border-line bg-paper px-5 py-10 text-center text-sm text-muted">{t("emptyAgent")}</p>
       ) : tab === "reminders" ? (
         <div className="grid items-start gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
@@ -140,7 +159,7 @@ export function AgentView() {
             </select>
             {assignment ? (
               <p className="mt-2 text-xs leading-5 text-muted">
-                {formatDate(assignment.dueDate, locale)} · {isPastDue(assignment.dueDate) ? t("pastDue") : t("upcoming")}
+                {formatDate(assignment.dueDate, locale, zoneOf(data.classes, assignment.classId))} · {isPastDue(assignment.dueDate, zoneOf(data.classes, assignment.classId)) ? t("pastDue") : t("upcoming")}
               </p>
             ) : null}
             <div className="mt-4 flex items-center justify-between gap-2">
@@ -367,22 +386,6 @@ function sourceCaption(source: ShownSource, t: Translator) {
   return t("templateCaption");
 }
 
-async function runAgent(payload: AgentRequest): Promise<{ source: ShownSource; result: AgentResult }> {
-  try {
-    const response = await fetch("/api/agent", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    if (!response.ok) throw new Error("status");
-    const result = (await response.json()) as AgentResult;
-    if (!result || result.kind !== payload.kind) throw new Error("shape");
-    return { source: result.source, result };
-  } catch {
-    return { source: "local", result: localResult(payload) };
-  }
-}
-
 function buildReminders(data: DemoData, locale: Locale, assignmentId: string, studentIds: string[]): ReminderRequest | null {
   const assignment = data.assignments.find((item) => item.id === assignmentId);
   const schoolClass = data.classes.find((item) => item.id === assignment?.classId);
@@ -414,7 +417,8 @@ function buildReminders(data: DemoData, locale: Locale, assignmentId: string, st
     className: tx(locale, schoolClass.nameAr, schoolClass.nameEn),
     subject: tx(locale, schoolClass.subjectAr, schoolClass.subjectEn),
     assignmentTitle: tx(locale, assignment.titleAr, assignment.titleEn),
-    dueDateLabel: formatDate(assignment.dueDate, locale),
+    dueDateLabel: formatDate(assignment.dueDate, locale, zoneOf(data.classes, schoolClass.id)),
+    tone: data.tone,
     students,
   };
 }
@@ -440,8 +444,8 @@ function buildSummary(data: DemoData, locale: Locale, classChoice: string): Summ
           const counts = tally(data, assignment.id);
           return {
             title: tx(locale, assignment.titleAr, assignment.titleEn),
-            dueDateLabel: formatDate(assignment.dueDate, locale),
-            pastDue: isPastDue(assignment.dueDate),
+            dueDateLabel: formatDate(assignment.dueDate, locale, zoneOf(data.classes, schoolClass.id)),
+            pastDue: isPastDue(assignment.dueDate, zoneOf(data.classes, schoolClass.id)),
             submitted: counts.submitted,
             late: counts.late,
             notSubmitted: counts.notSubmitted,

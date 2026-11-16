@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { SubmissionStatus } from "@/lib/types";
 
@@ -11,8 +11,8 @@ export function cn(...parts: Array<string | false | null | undefined>): string {
 const focus = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal";
 
 export const buttonClass = {
-  primary: `inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-teal px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-2 disabled:cursor-not-allowed disabled:opacity-50 ${focus}`,
-  secondary: `inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-ink ring-1 ring-line transition hover:bg-sand disabled:cursor-not-allowed disabled:opacity-50 ${focus}`,
+  primary: `inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl bg-teal px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-2 disabled:cursor-not-allowed disabled:opacity-50 ${focus}`,
+  secondary: `inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-ink ring-1 ring-line transition hover:bg-sand disabled:cursor-not-allowed disabled:opacity-50 ${focus}`,
   ghost: `inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-muted transition hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-50 ${focus}`,
   danger: `inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-rose-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-rose-800 disabled:cursor-not-allowed disabled:opacity-50 ${focus}`,
 };
@@ -79,7 +79,7 @@ export function SplitBar({ submitted, late, missing }: { submitted: number; late
   const total = submitted + late + missing;
   if (total === 0) return <div className="h-2.5 rounded-full bg-line" />;
   return (
-    <div className="flex h-2.5 overflow-hidden rounded-full bg-line" aria-hidden>
+    <div className="flex h-2.5 overflow-hidden rounded-full bg-line" dir="ltr" aria-hidden>
       <span className="bg-emerald-600" style={{ width: `${(submitted / total) * 100}%` }} />
       <span className="bg-amber-500" style={{ width: `${(late / total) * 100}%` }} />
       <span className="bg-rose-500" style={{ width: `${(missing / total) * 100}%` }} />
@@ -101,11 +101,30 @@ export function Modal({
   children: React.ReactNode;
 }) {
   const titleId = useId();
+  const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!open) return;
+    const panel = panelRef.current;
+    const previously = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const focusable = panel?.querySelectorAll<HTMLElement>("button, [href], input, select, textarea");
+    focusable?.[0]?.focus();
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") onClose();
+      if (event.key !== "Tab" || !panel) return;
+      const items = [...panel.querySelectorAll<HTMLElement>("button, [href], input, select, textarea")].filter(
+        (item) => !item.hasAttribute("disabled"),
+      );
+      if (items.length === 0) return;
+      const first = items[0];
+      const last = items[items.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
     };
     const previous = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -113,6 +132,7 @@ export function Modal({
     return () => {
       document.body.style.overflow = previous;
       window.removeEventListener("keydown", onKey);
+      previously?.focus();
     };
   }, [open, onClose]);
 
@@ -122,6 +142,7 @@ export function Modal({
     <div className="fixed inset-0 z-50 flex items-end justify-center p-4 sm:items-center">
       <button type="button" className="absolute inset-0 cursor-pointer bg-navy/55" aria-label={closeLabel} onClick={onClose} />
       <div
+        ref={panelRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
@@ -171,11 +192,13 @@ export function CopyButton({
   label,
   copiedLabel,
   className,
+  onCopied,
 }: {
   text: string;
   label: string;
   copiedLabel: string;
   className?: string;
+  onCopied?: () => void;
 }) {
   const [done, setDone] = useState(false);
   return (
@@ -186,6 +209,7 @@ export function CopyButton({
         setDone(true);
         window.setTimeout(() => setDone(false), 8000);
         void copyText(text);
+        onCopied?.();
       }}
     >
       {done ? copiedLabel : label}

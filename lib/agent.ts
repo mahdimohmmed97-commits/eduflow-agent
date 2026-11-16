@@ -1,4 +1,4 @@
-import type { Gender, Locale } from "@/lib/types";
+import type { Gender, Locale, Tone } from "@/lib/types";
 
 export type ReminderStudent = {
   id: string;
@@ -18,6 +18,7 @@ export type ReminderRequest = {
   subject: string;
   assignmentTitle: string;
   dueDateLabel: string;
+  tone: Tone;
   students: ReminderStudent[];
 };
 
@@ -68,9 +69,21 @@ export function reminderTemplates(request: ReminderRequest): ReminderDraft[] {
   return request.students.map((student) => ({
     studentId: student.id,
     studentMessage:
-      request.locale === "ar" ? arabicStudent(request, student) : englishStudent(request, student),
+      request.locale === "ar"
+        ? request.tone === "friendly"
+          ? arabicStudentFriendly(request, student)
+          : arabicStudent(request, student)
+        : request.tone === "friendly"
+          ? englishStudentFriendly(request, student)
+          : englishStudent(request, student),
     parentMessage:
-      request.locale === "ar" ? arabicParent(request, student) : englishParent(request, student),
+      request.locale === "ar"
+        ? request.tone === "friendly"
+          ? arabicParentFriendly(request, student)
+          : arabicParent(request, student)
+        : request.tone === "friendly"
+          ? englishParentFriendly(request, student)
+          : englishParent(request, student),
   }));
 }
 
@@ -94,6 +107,11 @@ export function messagesFor(request: AgentRequest): ChatMessage[] {
     "Do not invent grades, attendance, behavior, phone calls, or any fact that is not in the data.",
     "Do not say a message has already been sent.",
     "In Arabic, use the correct gender for the student.",
+    request.kind === "reminders" && request.tone === "friendly"
+      ? "Tone: friendly. Warm, short, and still professional. No slang."
+      : request.kind === "reminders"
+        ? "Tone: formal. A respectful school letter."
+        : "Tone: a calm briefing for the teacher.",
     "Return JSON only.",
   ].join(" ");
 
@@ -178,7 +196,8 @@ function parseReminders(body: Record<string, unknown>): ReminderRequest | null {
   const subject = clip(body.subject, 120);
   const assignmentTitle = clip(body.assignmentTitle, 180);
   const dueDateLabel = clip(body.dueDateLabel, 80);
-  if (!locale || !teacherName || !schoolLine || !className || !subject || !assignmentTitle || !dueDateLabel) {
+  const tone = body.tone === undefined || body.tone === "formal" ? "formal" : body.tone === "friendly" ? "friendly" : null;
+  if (!locale || !teacherName || !schoolLine || !className || !subject || !assignmentTitle || !dueDateLabel || !tone) {
     return null;
   }
   if (!Array.isArray(body.students) || body.students.length === 0 || body.students.length > 40) return null;
@@ -204,6 +223,7 @@ function parseReminders(body: Record<string, unknown>): ReminderRequest | null {
     subject,
     assignmentTitle,
     dueDateLabel,
+    tone,
     students,
   };
 }
@@ -377,6 +397,121 @@ function englishParent(request: ReminderRequest, student: ReminderStudent): stri
     `Your follow-up at home makes a difference. I am happy to help if ${student.givenName} needs extra support.`,
     "",
     "Kind regards,",
+    request.teacherName,
+    request.schoolLine,
+  ].join("\n");
+}
+
+function arabicStudentFriendly(request: ReminderRequest, student: ReminderStudent): string {
+  const ask = student.gender === "female" ? "أخبريني" : "أخبرني";
+  if (student.status === "late") {
+    return [
+      `أهلاً ${student.name}،`,
+      "",
+      `وصلني «${request.assignmentTitle}» بعد الموعد (${request.dueDateLabel}). شكراً لإرساله.`,
+      "",
+      "لو وصل في الوقت المرة الجاية تحفظ الدرجة كاملة. إذا صار ظرف، كلّمني.",
+      "",
+      "تحياتي،",
+      request.teacherName,
+      request.schoolLine,
+    ].join("\n");
+  }
+  return [
+    `أهلاً ${student.name}،`,
+    "",
+    `تذكير لطيف: واجب «${request.assignmentTitle}» في ${request.subject} كان موعده ${request.dueDateLabel}، وما وصلني تسليمك بعد.`,
+    "",
+    `أرسله اليوم لو تقدر. وإذا تحتاج مساعدة، ${ask}.`,
+    "",
+    "تحياتي،",
+    request.teacherName,
+    request.schoolLine,
+  ].join("\n");
+}
+
+function arabicParentFriendly(request: ReminderRequest, student: ReminderStudent): string {
+  const child = student.gender === "female" ? "ابنتكم" : "ابنكم";
+  const verb = student.gender === "female" ? "تُسلّم" : "يُسلّم";
+  const delivered = student.gender === "female" ? "سلّمت" : "سلّم";
+  const need = student.gender === "female" ? "احتاجت" : "احتاج";
+  const mark = student.gender === "female" ? "تقييمها" : "تقييمه";
+  if (student.status === "late") {
+    return [
+      `أهلاً ${student.parentName}،`,
+      "",
+      `يسعدني إعلامكم أن ${child} ${student.name} ${delivered} «${request.assignmentTitle}» بعد الموعد (${request.dueDateLabel})، والواجب وصل.`,
+      "",
+      `لو ساعدتم ${student.givenName} على التسليم في الوقت المرة الجاية يكون أثره واضحاً على ${mark}.`,
+      "",
+      "شكراً لمتابعتكم،",
+      request.teacherName,
+      request.schoolLine,
+    ].join("\n");
+  }
+  return [
+    `أهلاً ${student.parentName}،`,
+    "",
+    `تذكير لطيف: ${child} ${student.name} لم ${verb} «${request.assignmentTitle}» بعد، والموعد كان ${request.dueDateLabel}.`,
+    "",
+    `مشاركتكم في المنزل تصنع فرقاً. يسعدني المساعدة إذا ${need} ${student.givenName} دعماً إضافياً.`,
+    "",
+    "شكراً لكم،",
+    request.teacherName,
+    request.schoolLine,
+  ].join("\n");
+}
+
+function englishStudentFriendly(request: ReminderRequest, student: ReminderStudent): string {
+  if (student.status === "late") {
+    return [
+      `Hi ${student.name},`,
+      "",
+      `I got “${request.assignmentTitle}” after the due date (${request.dueDateLabel}). Thank you for sending it.`,
+      "",
+      "On time next time keeps the full mark. If something got in the way, just tell me.",
+      "",
+      "Best,",
+      request.teacherName,
+      request.schoolLine,
+    ].join("\n");
+  }
+  return [
+    `Hi ${student.name},`,
+    "",
+    `A gentle nudge: “${request.assignmentTitle}” for ${request.subject} was due ${request.dueDateLabel}, and I still don’t have it.`,
+    "",
+    "Send it today if you can. If you need help, tell me.",
+    "",
+    "Best,",
+    request.teacherName,
+    request.schoolLine,
+  ].join("\n");
+}
+
+function englishParentFriendly(request: ReminderRequest, student: ReminderStudent): string {
+  const child = student.gender === "female" ? "daughter" : "son";
+  if (student.status === "late") {
+    return [
+      `Hello ${student.parentName},`,
+      "",
+      `Just a note that your ${child}, ${student.name}, did hand in “${request.assignmentTitle}”, after the due date (${request.dueDateLabel}).`,
+      "",
+      `A little help so ${student.givenName} hits the next deadline on time would protect the mark.`,
+      "",
+      "Thank you,",
+      request.teacherName,
+      request.schoolLine,
+    ].join("\n");
+  }
+  return [
+    `Hello ${student.parentName},`,
+    "",
+    `A gentle note: your ${child}, ${student.name}, has not sent “${request.assignmentTitle}” yet. It was due ${request.dueDateLabel}.`,
+    "",
+    `A reminder at home today would help. I am happy to support ${student.givenName} if the work is stuck.`,
+    "",
+    "Thank you,",
     request.teacherName,
     request.schoolLine,
   ].join("\n");

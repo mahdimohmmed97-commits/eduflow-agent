@@ -1,9 +1,32 @@
 import { localResult, messagesFor, parseAgentRequest, resultFromModel } from "@/lib/agent";
 
+const MAX_BODY = 64_000;
+
+function modelName(): string {
+  const fallback = "gpt-4o-mini";
+  const value = process.env.OPENAI_MODEL?.trim() || fallback;
+  return /^[a-zA-Z0-9._:-]{1,64}$/.test(value) ? value : fallback;
+}
+
 export async function POST(request: Request) {
+  const length = Number(request.headers.get("content-length") ?? "0");
+  if (Number.isFinite(length) && length > MAX_BODY) {
+    return Response.json({ error: "payload_too_large" }, { status: 413 });
+  }
+
+  let raw = "";
+  try {
+    raw = await request.text();
+  } catch {
+    return Response.json({ error: "invalid_json" }, { status: 400 });
+  }
+  if (raw.length > MAX_BODY) {
+    return Response.json({ error: "payload_too_large" }, { status: 413 });
+  }
+
   let body: unknown;
   try {
-    body = await request.json();
+    body = JSON.parse(raw);
   } catch {
     return Response.json({ error: "invalid_json" }, { status: 400 });
   }
@@ -15,7 +38,6 @@ export async function POST(request: Request) {
   if (!apiKey) return Response.json(localResult(parsed));
 
   try {
-    const model = process.env.OPENAI_MODEL?.trim() || "gpt-4o-mini";
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -24,7 +46,7 @@ export async function POST(request: Request) {
       },
       signal: AbortSignal.timeout(20_000),
       body: JSON.stringify({
-        model,
+        model: modelName(),
         temperature: 0.4,
         response_format: { type: "json_object" },
         messages: messagesFor(parsed),

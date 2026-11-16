@@ -4,11 +4,57 @@ import Link from "next/link";
 import { ContentSkeleton } from "@/components/skeletons";
 import { SplitBar, StatusBadge, buttonClass } from "@/components/ui";
 import type { MessageKey } from "@/lib/i18n";
+import { TrendChart } from "@/components/trend-chart";
 import { duePhrase } from "@/lib/dates";
+import { dailyActions } from "@/lib/risk";
 import { useEduFlow } from "@/lib/store";
-import { classOnTimeRate, focusAssignment, listFollowUps, pastDueTally, tally, uniqueStudentCount } from "@/lib/stats";
-import { countLabel, followUpSentence, greeting, tx } from "@/lib/text";
+import { MINUTES_PER_DRAFT, classOnTimeRate, focusAssignment, listFollowUps, pastDueTally, tally, trendSeries, uniqueStudentCount } from "@/lib/stats";
+import { countLabel, fill, followUpSentence, greeting, tx } from "@/lib/text";
 import { TEACHER, type SubmissionStatus } from "@/lib/types";
+
+function weekText(weeksAgo: number, locale: "ar" | "en", t: (key: MessageKey) => string): string {
+  if (weeksAgo <= 0) return t("thisWeek");
+  if (locale === "en") return weeksAgo === 1 ? "1 week ago" : `${weeksAgo} weeks ago`;
+  if (weeksAgo === 1) return "قبل أسبوع";
+  if (weeksAgo === 2) return "قبل أسبوعين";
+  return fill(t("weekLabel"), { n: weeksAgo });
+}
+
+function Impact() {
+  const { data, locale, t } = useEduFlow();
+  if (!data) return null;
+  const actions = dailyActions(data);
+  const minutes = actions.length * MINUTES_PER_DRAFT;
+  const series = trendSeries(data);
+  const points = series.map((point) => ({
+    rate: point.onTimeRate,
+    label: weekText(point.weeksAgo, locale, t),
+  }));
+  const from = series[0]?.onTimeRate;
+  const to = series[series.length - 1]?.onTimeRate;
+  const caption =
+    from !== undefined && to !== undefined
+      ? `${t("trendTitle")}. ${fill(t("pointsUp"), { from, to })}`
+      : t("trendTitle");
+
+  return (
+    <section className="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)]" aria-label={t("impactTitle")}>
+      <article className="rounded-3xl border border-line bg-paper p-5 shadow-sm">
+        <p className="text-sm font-semibold text-gold-2">{t("impactTitle")} · {t("estimateTag")}</p>
+        <p className="mt-2 text-4xl font-semibold tabular-nums text-teal">{fill(t("timeSavedValue"), { minutes })}</p>
+        <p className="mt-2 text-sm leading-6 text-muted">{fill(t("timeSavedBody"), { count: actions.length, each: MINUTES_PER_DRAFT })}</p>
+        <p className="mt-3 text-xs leading-5 text-muted">{t("impactBody")}</p>
+      </article>
+      <article className="rounded-3xl border border-line bg-paper p-5 shadow-sm">
+        <h2 className="text-lg font-semibold">{t("trendTitle")}</h2>
+        <p className="mt-1 text-sm text-muted">{t("trendHint")}</p>
+        <div className="mt-3">
+          <TrendChart points={points} label={caption} />
+        </div>
+      </article>
+    </section>
+  );
+}
 
 function statusText(status: SubmissionStatus, t: (key: MessageKey) => string) {
   if (status === "submitted") return t("statusSubmitted");
@@ -71,10 +117,10 @@ export function Dashboard() {
               {teacher}
             </h1>
             <p className="mt-3 max-w-xl text-base leading-7 text-white/80">{followUpSentence(people, locale)}</p>
-            <p className="mt-1 text-sm text-white/60">{t("heroSupport")}</p>
+            <p className="mt-1 text-sm text-white/80">{t("heroSupport")}</p>
             <div className="mt-6 flex flex-wrap gap-3">
-              <Link href="/agent" className="inline-flex items-center rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-navy">
-                {t("heroReminders")}
+              <Link href="/agent" className="inline-flex min-h-11 items-center rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-navy">
+                {t("heroPlan")}
               </Link>
               <Link
                 href="/agent?tab=summary"
@@ -91,7 +137,7 @@ export function Dashboard() {
               <Donut value={overall.rate} label={`${overall.rate}%`} />
             )}
             <div>
-              <p className="text-sm text-white/70">{t("onTime")}</p>
+              <p className="text-sm text-white/80">{t("onTime")} · {t("measuredTag")}</p>
               <p className="mt-1 text-lg font-semibold">
                 {overall.submitted} / {overall.total}
               </p>
@@ -111,10 +157,15 @@ export function Dashboard() {
         ))}
       </section>
 
+      <Impact />
+
       <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(300px,0.85fr)]">
         <section aria-label={t("classesHeading")}>
           <h2 className="mb-3 text-lg font-semibold">{t("classesHeading")}</h2>
           <div className="grid gap-4">
+            {data.classes.length === 0 ? (
+              <p className="rounded-3xl border border-dashed border-line bg-paper px-5 py-10 text-center text-sm text-muted">{t("noClassesYet")}</p>
+            ) : null}
             {data.classes.map((schoolClass) => {
               const students = data.students.filter((item) => item.classId === schoolClass.id).length;
               const assignments = data.assignments.filter((item) => item.classId === schoolClass.id).length;

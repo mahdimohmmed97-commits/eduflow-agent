@@ -29,8 +29,10 @@ function roster(
 }
 
 export function createSeed(today = todayIso()): DemoData {
+  const fractionsDue = addDays(today, -12);
   const linearDue = addDays(today, -4);
   const geometryDue = addDays(today, 3);
+  const vocabDue = addDays(today, -10);
   const essayDue = addDays(today, -2);
   const readingDue = addDays(today, 5);
 
@@ -47,6 +49,7 @@ export function createSeed(today = todayIso()): DemoData {
       schoolEn: "Al Noor International School",
       cityAr: "دبي",
       cityEn: "Dubai",
+      timeZone: "Asia/Dubai",
     },
     {
       id: "cls-g10-english",
@@ -60,6 +63,7 @@ export function createSeed(today = todayIso()): DemoData {
       schoolEn: "Ishraq Training Center",
       cityAr: "الرياض",
       cityEn: "Riyadh",
+      timeZone: "Asia/Riyadh",
     },
   ];
 
@@ -83,6 +87,15 @@ export function createSeed(today = todayIso()): DemoData {
 
   const assignments: Assignment[] = [
     {
+      id: "asg-fractions",
+      classId: "cls-g8-math",
+      titleAr: "الكسور",
+      titleEn: "Fractions",
+      descriptionAr: "حل تمارين الكسور المتكافئة من 1 إلى 6 في الدفتر.",
+      descriptionEn: "Solve equivalent-fraction exercises 1 to 6 in the notebook.",
+      dueDate: fractionsDue,
+    },
+    {
       id: "asg-linear",
       classId: "cls-g8-math",
       titleAr: "المعادلات الخطية",
@@ -99,6 +112,15 @@ export function createSeed(today = todayIso()): DemoData {
       descriptionAr: "ارسم الأشكال المطلوبة واحسب المحيط والمساحة.",
       descriptionEn: "Draw the requested shapes and calculate the perimeter and area.",
       dueDate: geometryDue,
+    },
+    {
+      id: "asg-vocab",
+      classId: "cls-g10-english",
+      titleAr: "المفردات: الوحدة الثانية",
+      titleEn: "Vocabulary: Unit 2",
+      descriptionAr: "اكتب جملة لكل كلمة من قائمة الوحدة الثانية.",
+      descriptionEn: "Write one sentence for each word on the unit 2 list.",
+      dueDate: vocabDue,
     },
     {
       id: "asg-essay",
@@ -121,6 +143,24 @@ export function createSeed(today = todayIso()): DemoData {
   ];
 
   const submissions: Submission[] = [
+    ...roster(
+      "asg-fractions",
+      fractionsDue,
+      {
+        "stu-01": "submitted",
+        "stu-02": "submitted",
+        "stu-03": "submitted",
+        "stu-04": "submitted",
+        "stu-05": "not_submitted",
+        "stu-06": "late",
+        "stu-07": "late",
+        "stu-08": "submitted",
+      },
+      {
+        "stu-06": "بدأ بعد غياب قصير",
+        "stu-07": "تأخرت في الكسور ثم التزمت بالواجب التالي",
+      },
+    ),
     ...roster(
       "asg-linear",
       linearDue,
@@ -149,6 +189,20 @@ export function createSeed(today = todayIso()): DemoData {
       "stu-07": "submitted",
       "stu-08": "not_submitted",
     }),
+    ...roster(
+      "asg-vocab",
+      vocabDue,
+      {
+        "stu-09": "submitted",
+        "stu-10": "submitted",
+        "stu-11": "submitted",
+        "stu-12": "not_submitted",
+        "stu-13": "submitted",
+        "stu-14": "submitted",
+        "stu-15": "late",
+      },
+      { "stu-15": "سُلّمت قائمة المفردات بعد الحصة" },
+    ),
     ...roster("asg-essay", essayDue, {
       "stu-09": "submitted",
       "stu-10": "submitted",
@@ -169,7 +223,36 @@ export function createSeed(today = todayIso()): DemoData {
     }),
   ];
 
-  return { classes, students, assignments, submissions };
+  return {
+    classes,
+    students,
+    assignments,
+    submissions,
+    tone: "formal",
+    channel: "whatsapp",
+    approvals: [],
+    trend: [
+      { weeksAgo: 3, onTimeRate: 38 },
+      { weeksAgo: 2, onTimeRate: 46 },
+      { weeksAgo: 1, onTimeRate: 52 },
+    ],
+    activity: [
+      {
+        id: "act-morning",
+        at: `${today}T07:40:00+04:00`,
+        kind: "plan",
+        textAr: "هذا الصباح راجع الوكيل الواجبات المستحقة في دبي والرياض. رصد 4 طلاب بنمط متكرر و4 حالات فردية، وخفّض مخاطر نورة الدوسري لأنها عادت إلى الموعد. لم تُرسل أي رسالة.",
+        textEn: "This morning the agent reviewed due work in Dubai and Riyadh. It flagged 4 repeated patterns and 4 one-off cases, and lowered Noura Al Dosari’s risk because she is back on time. Nothing was sent.",
+      },
+      {
+        id: "act-noura",
+        at: `${addDays(today, -1)}T18:05:00+04:00`,
+        kind: "plan",
+        textAr: "أمس لاحظ الوكيل أن نورة الدوسري تأخرت في «الكسور» ثم سلّمت «المعادلات الخطية» في الموعد.",
+        textEn: "Yesterday the agent noticed Noura Al Dosari was late on Fractions and then on time for Linear Equations.",
+      },
+    ],
+  };
 }
 
 function student(

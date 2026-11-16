@@ -22,7 +22,7 @@ const latin = Plus_Jakarta_Sans({
 export const metadata: Metadata = {
   title: "EduFlow Agent | وكيل متابعة الواجبات",
   description:
-    "Draft homework reminders and weekly follow-up summaries for private schools and training centers in the UAE and Saudi Arabia.",
+    "A homework follow-up agent for private schools and training centers in the UAE and Saudi Arabia. It plans the day, scores risk, and drafts messages for the teacher to approve.",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

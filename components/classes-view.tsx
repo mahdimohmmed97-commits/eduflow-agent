@@ -6,7 +6,7 @@ import { ContentSkeleton } from "@/components/skeletons";
 import { Button, Field, Modal, PageIntro, buttonClass, inputClass } from "@/components/ui";
 import { addClass, addStudent, deleteClass, deleteStudent, useEduFlow } from "@/lib/store";
 import { countLabel, fill, pair, tx } from "@/lib/text";
-import type { Gender } from "@/lib/types";
+import type { Gender, GulfTimeZone } from "@/lib/types";
 
 type DeleteTarget = { id: string; label: string; kind: "class" | "student" };
 
@@ -21,6 +21,7 @@ const emptyClass = {
   schoolEn: "",
   cityAr: "",
   cityEn: "",
+  timeZone: "Asia/Dubai" as GulfTimeZone,
 };
 
 const emptyStudent = {
@@ -61,7 +62,19 @@ export function ClassesView() {
       setError(t("formError"));
       return;
     }
-    addClass({ nameAr, nameEn, subjectAr, subjectEn, gradeAr, gradeEn, schoolAr, schoolEn, cityAr, cityEn });
+    addClass({
+      nameAr,
+      nameEn,
+      subjectAr,
+      subjectEn,
+      gradeAr,
+      gradeEn,
+      schoolAr,
+      schoolEn,
+      cityAr,
+      cityEn,
+      timeZone: classForm.timeZone,
+    });
     closeModal();
   }
 
@@ -127,7 +140,7 @@ export function ClassesView() {
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-sm font-semibold text-gold-2">
-                      {tx(locale, schoolClass.schoolAr, schoolClass.schoolEn)} · {tx(locale, schoolClass.cityAr, schoolClass.cityEn)}
+                      {tx(locale, schoolClass.schoolAr, schoolClass.schoolEn)} · {tx(locale, schoolClass.cityAr, schoolClass.cityEn)} · {schoolClass.timeZone === "Asia/Riyadh" ? t("tzRiyadh") : t("tzDubai")}
                     </p>
                     <h2 className="mt-1 text-xl font-semibold">{tx(locale, schoolClass.nameAr, schoolClass.nameEn)}</h2>
                     <p className="text-sm text-muted">
@@ -207,6 +220,16 @@ export function ClassesView() {
           <Field label={t("schoolEn")}><input className={inputClass} value={classForm.schoolEn} onChange={(event) => setClassForm({ ...classForm, schoolEn: event.target.value })} /></Field>
           <Field label={t("cityAr")}><input className={inputClass} value={classForm.cityAr} onChange={(event) => setClassForm({ ...classForm, cityAr: event.target.value })} /></Field>
           <Field label={t("cityEn")}><input className={inputClass} value={classForm.cityEn} onChange={(event) => setClassForm({ ...classForm, cityEn: event.target.value })} /></Field>
+          <Field label={t("timeZone")}>
+            <select
+              className={inputClass}
+              value={classForm.timeZone}
+              onChange={(event) => setClassForm({ ...classForm, timeZone: event.target.value as GulfTimeZone })}
+            >
+              <option value="Asia/Dubai">{t("tzDubai")}</option>
+              <option value="Asia/Riyadh">{t("tzRiyadh")}</option>
+            </select>
+          </Field>
           {error ? <p className="text-sm text-rose-700 sm:col-span-2" role="alert">{error}</p> : null}
           <div className="flex gap-2 sm:col-span-2">
             <Button type="submit">{t("save")}</Button>
