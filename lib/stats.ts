@@ -24,6 +24,15 @@ export function resolvedStatus(data: DemoData, assignmentId: string, studentId: 
   return "not_submitted";
 }
 
+export function studentsNotSubmittedCount(data: DemoData): number {
+  const ids = new Set<string>();
+  for (const assignment of data.assignments) {
+    if (!isPastDue(assignment.dueDate, zoneOf(data.classes, assignment.classId))) continue;
+    for (const student of studentsWhoHaveNotSubmitted(data, assignment.id)) ids.add(student.id);
+  }
+  return ids.size;
+}
+
 export function studentsWhoHaveNotSubmitted(data: DemoData, assignmentId: string): Student[] {
   const assignment = data.assignments.find((item) => item.id === assignmentId);
   if (!assignment) return [];

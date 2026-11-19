@@ -1,5 +1,12 @@
 # Changelog
 
+## Phase 2 — teacher experience and measured follow-up
+
+- The inbox shows the prepare, edit, and approve-or-reject steps, and each draft is marked pending review, approved, or rejected.
+- Model drafts, local templates, and templates shown after a timeout or a lost connection are labeled separately. Approval of edited text is refused when it adds a grade, a school policy, an unknown figure, or another student. Approval still does not send.
+- A panel counts students who have not submitted, drafts prepared, drafts approved, and the measured duration of prepare requests in this browser. It does not estimate time saved.
+- The approve button still passes the teacher role from the page. That is not a login.
+
 ## Review before merge
 
 - Student ids are identifiers. The parser trims whitespace and lowercases them, so `Stu-01` and `stu-01` are the same id. Names are not lowercased.

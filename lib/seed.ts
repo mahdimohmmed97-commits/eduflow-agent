@@ -231,6 +231,8 @@ export function createSeed(today = todayIso()): DemoData {
     tone: "formal",
     channel: "whatsapp",
     approvals: [],
+    drafts: [],
+    measuredPrepareMs: 0,
     trend: [
       { weeksAgo: 3, onTimeRate: 38 },
       { weeksAgo: 2, onTimeRate: 46 },

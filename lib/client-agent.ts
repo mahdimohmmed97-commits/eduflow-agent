@@ -2,9 +2,21 @@ import { explainAgentRequest, groundAgentResult, localResult, type AgentRequest,
 
 export type ShownSource = "openai" | "template" | "local";
 
+export type ConnectionFallback = "timeout" | "offline" | "server";
+
 export type AgentRun =
-  | { ok: true; source: ShownSource; result: AgentResult }
+  | { ok: true; source: ShownSource; fallback: ConnectionFallback | null; result: AgentResult }
   | { ok: false; error: AgentRequestError };
+
+function localRun(request: AgentRequest, fallback: ConnectionFallback): AgentRun {
+  return { ok: true, source: "local", fallback, result: localResult(request) };
+}
+
+export function connectionFallback(error: unknown): ConnectionFallback {
+  if (error instanceof DOMException && (error.name === "TimeoutError" || error.name === "AbortError")) return "timeout";
+  if (error instanceof Error && (error.name === "TimeoutError" || error.name === "AbortError")) return "timeout";
+  return "offline";
+}
 
 export async function runAgent(payload: AgentRequest): Promise<AgentRun> {
   const explained = explainAgentRequest(payload);
@@ -26,10 +38,10 @@ export async function runAgent(payload: AgentRequest): Promise<AgentRun> {
       }
       return { ok: false, error };
     }
-    if (!response.ok) return { ok: true, source: "local", result: localResult(explained.request) };
+    if (!response.ok) return localRun(explained.request, "server");
     const grounded = groundAgentResult(explained.request, await response.json());
-    return { ok: true, source: grounded.source === "openai" ? "openai" : "template", result: grounded };
-  } catch {
-    return { ok: true, source: "local", result: localResult(explained.request) };
+    return { ok: true, source: grounded.source === "openai" ? "openai" : "template", fallback: null, result: grounded };
+  } catch (error) {
+    return localRun(explained.request, connectionFallback(error));
   }
 }

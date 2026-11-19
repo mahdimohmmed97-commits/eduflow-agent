@@ -330,6 +330,32 @@ const ar = {
   sourceLocal: "قالب بعد تعذّر الاتصال",
   estimateTag: "تقدير",
   measuredTag: "محسوب من السجل",
+  stepsTitle: "خطوات المسودة",
+  stepPrepare: "جهّز المسودة. التجهيز لا يعتمدها ولا يرسلها.",
+  stepEdit: "اقرأ النص وعدّله. الرفض يبقيه في السجل بحالة مرفوضة.",
+  stepDecide: "اعتمد النص أو ارفضه. الاعتماد يحفظه ولا يرسله.",
+  statusPending: "بانتظار المراجعة",
+  statusApproved: "معتمدة",
+  statusRejected: "مرفوضة",
+  sourceBadgeAi: "مسودة من النموذج",
+  sourceBadgeTemplate: "مسودة من القالب المحلي",
+  sourceBadgeLocal: "قالب محلي بعد تعذّر الاتصال",
+  timeoutNotice: "انتهت مهلة الاتصال بعد ٤ ثوانٍ. عُرض القالب المحلي، ولم يُرسل شيء.",
+  offlineNotice: "لا يوجد اتصال بالخدمة. عُرض القالب المحلي، ولم يُرسل شيء.",
+  serverNotice: "الخدمة ردّت بخطأ. عُرض القالب المحلي، ولم يُرسل شيء.",
+  claimBlocked: "لا يمكن اعتماد هذا النص لأنه يذكر درجة أو سياسة غير موجودة في السجل.",
+  unknownFactBlocked: "لا يمكن اعتماد هذا النص لأنه يضيف رقماً أو نسبة أو تقديراً غير موجود في السجل.",
+  otherStudentBlocked: "لا يمكن اعتماد هذا النص لأنه يذكر طالباً آخر.",
+  emptyBlocked: "لا يمكن اعتماد نص فارغ.",
+  roleNotIdentity: "زر الاعتماد يمرّر دور «معلمة» من هذه الصفحة. هذا ليس تسجيل دخول ولا يثبت هويتك.",
+  regenerateDraft: "جهّز مسودة جديدة",
+  measuredPanelTitle: "ما قيس في هذا المتصفح",
+  measuredMissing: "طلاب لم يسلّموا",
+  measuredPrepared: "مسودات جُهزت",
+  measuredApproved: "مسودات اعتُمدت",
+  measuredTime: "وقت التجهيز المقاس",
+  measuredHint: "الوقت هو مدة طلبات التجهيز التي اكتملت في هذا المتصفح. ليس تقديراً لوقت موفّر.",
+  measuredZero: "لم يُجهَّز شيء بعد، فالمدة المقاسة صفر.",
 } as const;
 
 export type MessageKey = keyof typeof ar;
@@ -664,10 +690,40 @@ const en: Record<MessageKey, string> = {
   sourceLocal: "Template after the connection failed",
   estimateTag: "Estimate",
   measuredTag: "Calculated from the record",
+  stepsTitle: "Draft steps",
+  stepPrepare: "Prepare the draft. Preparing does not approve it or send it.",
+  stepEdit: "Read and edit the text. Rejecting keeps it on record as rejected.",
+  stepDecide: "Approve the text or reject it. Approving saves it and does not send it.",
+  statusPending: "Pending review",
+  statusApproved: "Approved",
+  statusRejected: "Rejected",
+  sourceBadgeAi: "Model draft",
+  sourceBadgeTemplate: "Local template draft",
+  sourceBadgeLocal: "Local template after the connection failed",
+  timeoutNotice: "The connection timed out after 4 seconds. The local template is shown, and nothing was sent.",
+  offlineNotice: "The service could not be reached. The local template is shown, and nothing was sent.",
+  serverNotice: "The service returned an error. The local template is shown, and nothing was sent.",
+  claimBlocked: "This text cannot be approved because it mentions a grade or a policy that is not in the record.",
+  unknownFactBlocked: "This text cannot be approved because it adds a number, percentage, or grade that is not in the record.",
+  otherStudentBlocked: "This text cannot be approved because it names another student.",
+  emptyBlocked: "An empty draft cannot be approved.",
+  roleNotIdentity: "The approve button sends the role “teacher” from this page. That is not a login and does not prove who you are.",
+  regenerateDraft: "Prepare a new draft",
+  measuredPanelTitle: "Measured in this browser",
+  measuredMissing: "Students who have not submitted",
+  measuredPrepared: "Drafts prepared",
+  measuredApproved: "Drafts approved",
+  measuredTime: "Measured preparation time",
+  measuredHint: "The time is how long the prepare requests took in this browser. It is not an estimate of time saved.",
+  measuredZero: "Nothing has been prepared yet, so the measured duration is zero.",
 };
 
 export const dictionary = { ar, en };
 
 export function translate(locale: Locale, key: MessageKey): string {
   return dictionary[locale][key];
+}
+
+export function pageDirection(locale: Locale): "rtl" | "ltr" {
+  return locale === "ar" ? "rtl" : "ltr";
 }
