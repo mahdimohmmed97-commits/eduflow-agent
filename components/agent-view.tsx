@@ -16,7 +16,7 @@ import { runAgent, type ShownSource } from "@/lib/client-agent";
 import type { MessageKey } from "@/lib/i18n";
 import { formatDate, isPastDue, zoneOf } from "@/lib/dates";
 import { logActivity, useEduFlow } from "@/lib/store";
-import { classOnTimeRate, listFollowUps, tally } from "@/lib/stats";
+import { classOnTimeRate, listFollowUps, resolvedStatus, tally } from "@/lib/stats";
 import { givenName, tx } from "@/lib/text";
 import { TEACHER, type DemoData, type Locale } from "@/lib/types";
 
@@ -63,12 +63,35 @@ export function AgentView() {
   const summaryKey = JSON.stringify(summaryRequest);
   const visibleSummary = summary && summary.key === summaryKey ? summary : null;
 
+  function editReminder(studentId: string, field: "studentMessage" | "parentMessage", value: string) {
+    setReminders((current) => {
+      if (!current) return current;
+      return {
+        ...current,
+        drafts: current.drafts.map((draft) => (draft.studentId === studentId ? { ...draft, [field]: value } : draft)),
+      };
+    });
+  }
+
+  function rejectReminder(studentId: string) {
+    setReminders((current) => {
+      if (!current) return current;
+      const drafts = current.drafts.filter((draft) => draft.studentId !== studentId);
+      if (drafts.length === 0) return null;
+      return { ...current, drafts };
+    });
+  }
+
   async function generateReminders() {
     if (!assignment || selectedIds.length === 0) return;
     const request = buildReminders(record, draftLocale, assignment.id, selectedIds);
     if (!request) return;
     setLoading(true);
     const outcome = await runAgent(request);
+    if (!outcome.ok) {
+      setLoading(false);
+      return;
+    }
     const drafts = outcome.result.kind === "reminders" ? outcome.result.drafts : [];
     setReminders({ key: reminderKey, source: outcome.source, drafts });
     logActivity(
@@ -83,6 +106,10 @@ export function AgentView() {
     if (!summaryRequest) return;
     setLoading(true);
     const outcome = await runAgent(summaryRequest);
+    if (!outcome.ok) {
+      setLoading(false);
+      return;
+    }
     const text = outcome.result.kind === "summary" ? outcome.result.summary : "";
     setSummary({ key: summaryKey, source: outcome.source, text });
     logActivity("summary", "صيغ ملخص الأسبوع للمراجعة. لم يُرسل.", "Drafted the weekly summary for review. It was not sent.");
@@ -248,12 +275,25 @@ export function AgentView() {
                           <p className="text-xs font-semibold uppercase tracking-wide text-gold-2">{t("draftOnlyShort")}</p>
                           <h3 className="text-lg font-semibold">{name}</h3>
                         </div>
-                        <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-950 ring-1 ring-amber-200">
-                          {t("draftMark")}
-                        </span>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-950 ring-1 ring-amber-200">
+                            {t("draftMark")}
+                          </span>
+                          <button type="button" className={buttonClass.secondary} onClick={() => rejectReminder(draft.studentId)}>
+                            {t("rejectDraft")}
+                          </button>
+                        </div>
                       </div>
                       <div className="grid gap-4 lg:grid-cols-2">
-                        <MessageCard title={t("toStudent")} who={name} text={draft.studentMessage} copyLabel={t("copyStudent")} copiedLabel={t("copied")} />
+                        <MessageCard
+                          title={t("toStudent")}
+                          who={name}
+                          text={draft.studentMessage}
+                          copyLabel={t("copyStudent")}
+                          copiedLabel={t("copied")}
+                          editorLabel={t("draftEditorLabel")}
+                          onTextChange={(value) => editReminder(draft.studentId, "studentMessage", value)}
+                        />
                         <MessageCard
                           title={t("toParent")}
                           who={parent}
@@ -262,6 +302,8 @@ export function AgentView() {
                           text={draft.parentMessage}
                           copyLabel={t("copyParent")}
                           copiedLabel={t("copied")}
+                          editorLabel={t("draftEditorLabel")}
+                          onTextChange={(value) => editReminder(draft.studentId, "parentMessage", value)}
                           warm
                         />
                       </div>
@@ -351,6 +393,8 @@ function MessageCard({
   copiedLabel,
   phone,
   phoneHint,
+  editorLabel,
+  onTextChange,
   warm = false,
 }: {
   title: string;
@@ -360,6 +404,8 @@ function MessageCard({
   copiedLabel: string;
   phone?: string;
   phoneHint?: string;
+  editorLabel?: string;
+  onTextChange?: (value: string) => void;
   warm?: boolean;
 }) {
   return (
@@ -372,7 +418,16 @@ function MessageCard({
           {phoneHint ? ` · ${phoneHint}` : ""}
         </p>
       ) : null}
-      <p className="mt-3 flex-1 whitespace-pre-wrap text-sm leading-7">{text}</p>
+      {onTextChange ? (
+        <textarea
+          aria-label={editorLabel ?? title}
+          className={`${inputClass} mt-3 min-h-48 flex-1`}
+          value={text}
+          onChange={(event) => onTextChange(event.target.value)}
+        />
+      ) : (
+        <p className="mt-3 flex-1 whitespace-pre-wrap text-sm leading-7">{text}</p>
+      )}
       <div className="mt-4">
         <CopyButton text={text} label={copyLabel} copiedLabel={copiedLabel} />
       </div>
@@ -394,8 +449,8 @@ function buildReminders(data: DemoData, locale: Locale, assignmentId: string, st
   const students = data.students
     .filter((student) => student.classId === schoolClass.id && allowed.has(student.id))
     .flatMap((student) => {
-      const submission = data.submissions.find((item) => item.assignmentId === assignment.id && item.studentId === student.id);
-      if (!submission || submission.status === "submitted") return [];
+      const status = resolvedStatus(data, assignment.id, student.id);
+      if (status === "submitted") return [];
       const name = tx(locale, student.nameAr, student.nameEn);
       return [
         {
@@ -404,7 +459,7 @@ function buildReminders(data: DemoData, locale: Locale, assignmentId: string, st
           givenName: givenName(name),
           gender: student.gender,
           parentName: tx(locale, student.parentNameAr, student.parentNameEn),
-          status: submission.status,
+          status,
         },
       ];
     });

@@ -56,7 +56,7 @@ function smsText(input: ChannelInput): string {
   }
   if (input.audience === "student") {
     return input.status === "late"
-      ? `${input.givenName}: “${input.assignmentTitle}” arrived after ${input.dueLabel}. Thank you for sending it. On time next time keeps the mark. ${input.teacherName}`
+      ? `${input.givenName}: “${input.assignmentTitle}” arrived after ${input.dueLabel}. Thank you for sending it. The next one is easier to follow if it arrives on time. ${input.teacherName}`
       : `${input.givenName}: “${input.assignmentTitle}” was due ${input.dueLabel} and has not arrived. Please send it today. ${input.teacherName}`;
   }
   return input.status === "late"

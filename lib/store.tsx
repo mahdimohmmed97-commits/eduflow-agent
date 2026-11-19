@@ -1,10 +1,10 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import { approveDraft, createPendingDraft } from "@/lib/approval";
 import { translate, type MessageKey } from "@/lib/i18n";
+import { patchSubmission } from "@/lib/records";
 import { createSeed } from "@/lib/seed";
-import { todayIso } from "@/lib/dates";
-import { zoneOf } from "@/lib/dates";
 import type {
   ActivityKind,
   Assignment,
@@ -196,10 +196,21 @@ export function recordApproval(input: {
   text: string;
   subject: string;
   source?: "openai" | "template" | "local";
+  actor: "teacher";
   textAr: string;
   textEn: string;
 }) {
   update((data) => {
+    const decision = approveDraft(
+      createPendingDraft({
+        studentId: input.studentId,
+        assignmentId: input.assignmentId,
+        audience: input.audience,
+        text: input.text,
+      }),
+      input.actor,
+    );
+    if (!decision.ok || decision.draft.sent !== false) return;
     data.approvals = data.approvals.filter(
       (item) =>
         !(
@@ -217,7 +228,7 @@ export function recordApproval(input: {
       tone: input.tone,
       channel: input.channel,
       audience: input.audience,
-      text: input.text,
+      text: decision.draft.text,
       subject: input.subject,
       source: input.source,
       approvedAt: new Date().toISOString(),
@@ -301,16 +312,8 @@ export function setSubmission(
   patch: Partial<Pick<{ status: SubmissionStatus; note: string }, "status" | "note">>,
 ) {
   update((data) => {
-    const row = data.submissions.find((item) => item.assignmentId === assignmentId && item.studentId === studentId);
-    if (!row) return;
-    if (patch.note !== undefined) row.note = patch.note.slice(0, 280);
-    if (!patch.status) return;
-    row.status = patch.status;
-    if (patch.status === "not_submitted") row.submittedOn = "";
-    if ((patch.status === "submitted" || patch.status === "late") && !row.submittedOn) {
-      const assignment = data.assignments.find((item) => item.id === assignmentId);
-      row.submittedOn = todayIso(zoneOf(data.classes, assignment?.classId ?? ""));
-    }
+    const result = patchSubmission(data, assignmentId, studentId, patch);
+    if (!result.statusChanged) return;
     const student = data.students.find((item) => item.id === studentId);
     const assignment = data.assignments.find((item) => item.id === assignmentId);
     if (student && assignment) {

@@ -9,7 +9,7 @@ import { Button, Field, Modal, PageIntro, SplitBar, buttonClass, inputClass, sta
 import type { MessageKey } from "@/lib/i18n";
 import { duePhrase, formatDate, isPastDue } from "@/lib/dates";
 import { addAssignment, deleteAssignment, setSubmission, useEduFlow } from "@/lib/store";
-import { assignmentFollowUps, tally } from "@/lib/stats";
+import { assignmentFollowUps, resolvedStatus, tally } from "@/lib/stats";
 import { countLabel, fill, pair, tx } from "@/lib/text";
 import type { DemoData, Locale, SubmissionStatus } from "@/lib/types";
 
@@ -178,8 +178,7 @@ function AssignmentDetail({ id, data, locale, t }: { id: string; data: DemoData;
   const flagged = assignmentFollowUps(data, assignment.id);
   const rows = roster.filter((student) => {
     if (filter === "all") return true;
-    const submission = data.submissions.find((item) => item.assignmentId === assignment.id && item.studentId === student.id);
-    return submission?.status === filter;
+    return resolvedStatus(data, assignment.id, student.id) === filter;
   });
   const filters: Array<{ id: "all" | SubmissionStatus; label: string; count: number }> = [
     { id: "all", label: t("filterAll"), count: counts.total },
@@ -264,7 +263,7 @@ function AssignmentDetail({ id, data, locale, t }: { id: string; data: DemoData;
           <tbody>
             {rows.map((student) => {
               const submission = data.submissions.find((item) => item.assignmentId === assignment.id && item.studentId === student.id);
-              const status = submission?.status ?? "not_submitted";
+              const status = resolvedStatus(data, assignment.id, student.id);
               const name = tx(locale, student.nameAr, student.nameEn);
               return (
                 <tr key={student.id} className="border-t border-line">

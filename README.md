@@ -53,8 +53,11 @@ Optional checks:
 ```bash
 npm run lint
 npm run typecheck
+npm test
 npm run build
 ```
+
+`npm test` was added in the Phase 1 safety pass. It checks missing submissions, rejected requests, reminder wording, and the rule that nothing is sent without a teacher, and that nothing is sent even then.
 
 To use the model instead of the built-in templates, copy the sample env file and add a key:
 
@@ -123,8 +126,11 @@ npm run dev
 ```bash
 npm run lint
 npm run typecheck
+npm test
 npm run build
 ```
+
+أُضيف `npm test` في جولة السلامة الأولى. يفحص الطلاب الذين لم يسلّموا، والطلبات المرفوضة، وصياغة التذكير، وقاعدة أن الرسالة لا تُرسل من غير المعلمة، ولا تُرسل حتى بعد اعتمادها.
 
 لاستخدام النموذج بدل القوالب، انسخ ملف البيئة وأضف المفتاح:
 

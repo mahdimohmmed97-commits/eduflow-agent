@@ -1,4 +1,4 @@
-import { localResult, messagesFor, parseAgentRequest, resultFromModel } from "@/lib/agent";
+import { explainAgentRequest, localResult, messagesFor, resultFromModel } from "@/lib/agent";
 
 const MAX_BODY = 64_000;
 
@@ -31,8 +31,9 @@ export async function POST(request: Request) {
     return Response.json({ error: "invalid_json" }, { status: 400 });
   }
 
-  const parsed = parseAgentRequest(body);
-  if (!parsed) return Response.json({ error: "invalid_request" }, { status: 400 });
+  const explained = explainAgentRequest(body);
+  if (!explained.ok) return Response.json({ error: explained.error }, { status: 400 });
+  const parsed = explained.request;
 
   const apiKey = process.env.OPENAI_API_KEY?.trim();
   if (!apiKey) return Response.json(localResult(parsed));
