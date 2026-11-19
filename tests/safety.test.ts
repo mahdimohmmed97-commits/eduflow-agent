@@ -168,6 +168,17 @@ test("duplicate student ids and incomplete requests are rejected", () => {
   const spaced = explainAgentRequest(reminder({ students: [student, { ...student, id: " stu-01 " }] }));
   assert.equal(spaced.ok, false);
   if (!spaced.ok) assert.equal(spaced.error, "duplicate_student_id");
+  const mixedCase = explainAgentRequest(reminder({ students: [student, { ...student, id: "STU-01" }] }));
+  assert.equal(mixedCase.ok, false);
+  if (!mixedCase.ok) assert.equal(mixedCase.error, "duplicate_student_id");
+  const canonical = explainAgentRequest(reminder({ students: [{ ...student, id: "  Stu-01 \n" }] }));
+  assert.equal(canonical.ok, true);
+  if (canonical.ok && canonical.request.kind === "reminders") assert.equal(canonical.request.students[0]?.id, "stu-01");
+  const sameStudentTwoReasons = summary([
+    { studentId: "Stu-01", studentName: "Layla Al Mansoori", reason: "Not submitted: Fractions" },
+    { studentId: "stu-01", studentName: "Layla Al Mansoori", reason: "Late: Linear Equations" },
+  ]);
+  assert.equal(explainAgentRequest(sameStudentTwoReasons).ok, true);
 
   const repeated = summary([
     { studentId: "stu-01", studentName: "Layla Al Mansoori", reason: "Not submitted: Fractions" },
@@ -179,6 +190,11 @@ test("duplicate student ids and incomplete requests are rejected", () => {
     { studentId: "stu-01", studentName: "Layla Al Mansoori", reason: "Not submitted: Fractions" },
   ]);
   assert.deepEqual(explainAgentRequest(sameFlag), { ok: false, error: "duplicate_student_id" });
+  const sameFlagCase = summary([
+    { studentId: "STU-01", studentName: "Layla Al Mansoori", reason: "Not submitted: Fractions" },
+    { studentId: " stu-01 ", studentName: "Layla Al Mansoori", reason: "Not submitted: Fractions" },
+  ]);
+  assert.deepEqual(explainAgentRequest(sameFlagCase), { ok: false, error: "duplicate_student_id" });
 
   const incomplete = [
     null,
@@ -318,6 +334,46 @@ test("the only API drafts from the supplied record and never delivers a message"
   } finally {
     if (originalKey === undefined) delete process.env.OPENAI_API_KEY;
     else process.env.OPENAI_API_KEY = originalKey;
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("a hung agent request falls back to the local template", { timeout: 10_000 }, async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = (_input, init) =>
+    new Promise((_resolve, reject) => {
+      const signal = init?.signal;
+      if (!signal) {
+        reject(new Error("missing abort signal"));
+        return;
+      }
+      const timer = setTimeout(() => reject(new Error("abort did not fire")), 6_000);
+      if (signal.aborted) {
+        clearTimeout(timer);
+        reject(signal.reason);
+        return;
+      }
+      signal.addEventListener(
+        "abort",
+        () => {
+          clearTimeout(timer);
+          reject(signal.reason);
+        },
+        { once: true },
+      );
+    });
+  try {
+    const started = Date.now();
+    const outcome = await runAgent(reminder());
+    const elapsed = Date.now() - started;
+    assert.equal(outcome.ok, true);
+    if (outcome.ok) {
+      assert.equal(outcome.source, "local");
+      assert.equal("sent" in outcome.result, false);
+    }
+    assert.ok(elapsed >= 3_500, `fell back too soon: ${elapsed}`);
+    assert.ok(elapsed < 7_000, `fell back too late: ${elapsed}`);
+  } finally {
     globalThis.fetch = originalFetch;
   }
 });

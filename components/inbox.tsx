@@ -5,14 +5,25 @@ import { canDraftParent } from "@/lib/ask";
 import { LimitsPanel } from "@/components/limits-panel";
 import { Reasoning } from "@/components/reasoning";
 import { presentDraft } from "@/lib/channels";
-import { runAgent } from "@/lib/client-agent";
+import { runAgent, type ShownSource } from "@/lib/client-agent";
 import { formatDate, zoneOf } from "@/lib/dates";
 import type { MessageKey } from "@/lib/i18n";
 import { dailyActions, improvingStudents, type RiskPattern, type StudentRisk } from "@/lib/risk";
 import { logActivity, recordApproval, setChannel, setTone, useEduFlow } from "@/lib/store";
 import { givenName, tx, fill } from "@/lib/text";
 import { TEACHER, type Audience, type Channel, type Tone } from "@/lib/types";
-import { CopyButton, buttonClass } from "@/components/ui";
+import { CopyButton, buttonClass, inputClass } from "@/components/ui";
+
+type PendingDraftCard = {
+  studentId: string;
+  assignmentId: string;
+  audience: Audience;
+  tone: Tone;
+  channel: Channel;
+  text: string;
+  subject: string;
+  source: ShownSource;
+};
 
 const patternKey: Record<RiskPattern, MessageKey> = {
   repeated: "patternRepeated",
@@ -27,13 +38,18 @@ export function Inbox() {
   const [busy, setBusy] = useState<string | null>(null);
   const [notice, setNotice] = useState("");
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [pending, setPending] = useState<Record<string, PendingDraftCard>>({});
   if (!data) return null;
   const record = data;
   const actions = dailyActions(data);
   const improving = improvingStudents(data);
   const highCount = actions.filter((item) => item.level === "high").length;
 
-  async function approve(item: StudentRisk, audience: Audience, manageBusy = true) {
+  function pendingKey(studentId: string, audience: Audience) {
+    return `${studentId}:${audience}`;
+  }
+
+  async function prepare(item: StudentRisk, audience: Audience, manageBusy = true) {
     const issue = item.latestIssue;
     if (!issue) return;
     const assignment = record.assignments.find((entry) => entry.id === issue.assignmentId);
@@ -100,23 +116,66 @@ export function Inbox() {
     const channelEn = record.channel === "email" ? "email" : record.channel === "sms" ? "SMS" : "WhatsApp";
     const whoAr = audience === "parent" ? `ولي أمر ${item.student.nameAr}` : item.student.nameAr;
     const whoEn = audience === "parent" ? `${item.student.nameEn}'s parent` : item.student.nameEn;
-    recordApproval({
-      studentId: item.student.id,
-      assignmentId: assignment.id,
-      tone: record.tone,
-      channel: record.channel,
-      audience,
-      text: presented.text,
-      subject: presented.subject,
-      source: outcome.source,
-      actor: "teacher",
-      textAr: `اعتمدت مسودة ${channelAr} لـ${whoAr} عن «${assignment.titleAr}». لم تُرسل.`,
-      textEn: `Approved a ${channelEn} draft for ${whoEn} about “${assignment.titleEn}”. It was not sent.`,
-    });
+    setPending((current) => ({
+      ...current,
+      [pendingKey(item.student.id, audience)]: {
+        studentId: item.student.id,
+        assignmentId: assignment.id,
+        audience,
+        tone: record.tone,
+        channel: record.channel,
+        text: presented.text,
+        subject: presented.subject,
+        source: outcome.source,
+      },
+    }));
+    logActivity(
+      "plan",
+      `جُهزت مسودة ${channelAr} لـ${whoAr} عن «${assignment.titleAr}». لم تُعتمد ولم تُرسل.`,
+      `Prepared a ${channelEn} draft for ${whoEn} about “${assignment.titleEn}”. It is not approved and was not sent.`,
+    );
     if (manageBusy) setBusy(null);
   }
 
-  async function approveUrgent() {
+  function rejectPending(studentId: string, audience: Audience, studentNameAr: string, studentNameEn: string) {
+    setPending((current) => {
+      const next = { ...current };
+      delete next[pendingKey(studentId, audience)];
+      return next;
+    });
+    const whoAr = audience === "parent" ? `ولي أمر ${studentNameAr}` : studentNameAr;
+    const whoEn = audience === "parent" ? `${studentNameEn}'s parent` : studentNameEn;
+    logActivity("refused", `رُفضت مسودة ${whoAr}. لم تُعتمد ولم تُرسل.`, `Rejected the draft for ${whoEn}. It was not approved and was not sent.`);
+  }
+
+  function commitPending(studentId: string, audience: Audience, studentNameAr: string, studentNameEn: string, titleAr: string, titleEn: string) {
+    const staged = pending[pendingKey(studentId, audience)];
+    if (!staged || !staged.text.trim()) return;
+    const channelAr = staged.channel === "email" ? "بريد" : staged.channel === "sms" ? "رسالة قصيرة" : "واتساب";
+    const channelEn = staged.channel === "email" ? "email" : staged.channel === "sms" ? "SMS" : "WhatsApp";
+    const whoAr = audience === "parent" ? `ولي أمر ${studentNameAr}` : studentNameAr;
+    const whoEn = audience === "parent" ? `${studentNameEn}'s parent` : studentNameEn;
+    recordApproval({
+      studentId,
+      assignmentId: staged.assignmentId,
+      tone: staged.tone,
+      channel: staged.channel,
+      audience,
+      text: staged.text,
+      subject: staged.subject,
+      source: staged.source,
+      actor: "teacher",
+      textAr: `اعتمدت مسودة ${channelAr} لـ${whoAr} عن «${titleAr}». لم تُرسل.`,
+      textEn: `Approved a ${channelEn} draft for ${whoEn} about “${titleEn}”. It was not sent.`,
+    });
+    setPending((current) => {
+      const next = { ...current };
+      delete next[pendingKey(studentId, audience)];
+      return next;
+    });
+  }
+
+  async function prepareUrgent() {
     const urgent = actions.filter((item) => item.level === "high");
     setBusy("all");
     for (const item of urgent) {
@@ -129,7 +188,7 @@ export function Inbox() {
           entry.channel === record.channel,
       );
       if (existing) continue;
-      await approve(item, "parent", false);
+      await prepare(item, "parent", false);
     }
     setBusy(null);
   }
@@ -152,9 +211,9 @@ export function Inbox() {
             type="button"
             className={buttonClass.primary}
             disabled={highCount === 0 || busy !== null}
-            onClick={() => void approveUrgent()}
+            onClick={() => void prepareUrgent()}
           >
-            {busy === "all" ? t("drafting") : t("approveHigh")}
+            {busy === "all" ? t("drafting") : t("prepareHigh")}
           </button>
         </div>
         <div className="mt-4 grid gap-4 md:grid-cols-2">
@@ -191,7 +250,7 @@ export function Inbox() {
             const issue = item.latestIssue;
             const assignment = issue ? data.assignments.find((entry) => entry.id === issue.assignmentId) : null;
             const schoolClass = data.classes.find((entry) => entry.id === item.student.classId);
-            const approval = data.approvals.find(
+            const approvals = data.approvals.filter(
               (entry) =>
                 entry.studentId === item.student.id &&
                 entry.assignmentId === issue?.assignmentId &&
@@ -231,21 +290,76 @@ export function Inbox() {
                     type="button"
                     className={buttonClass.primary}
                     disabled={busy !== null}
-                    onClick={() => void approve(item, "parent")}
+                    onClick={() => void prepare(item, "parent")}
                   >
-                    {busy === `${item.student.id}:parent` ? t("drafting") : t("approveParent")}
+                    {busy === `${item.student.id}:parent` ? t("drafting") : t("prepareParent")}
                   </button>
                   <button
                     type="button"
                     className={buttonClass.secondary}
                     disabled={busy !== null}
-                    onClick={() => void approve(item, "student")}
+                    onClick={() => void prepare(item, "student")}
                   >
-                    {busy === `${item.student.id}:student` ? t("drafting") : t("approveStudent")}
+                    {busy === `${item.student.id}:student` ? t("drafting") : t("prepareStudent")}
                   </button>
                 </div>
-                {approval ? (
-                  <div className="mt-4 rounded-2xl bg-sand px-4 py-4">
+                {(["parent", "student"] as const).map((audience) => {
+                  const staged = pending[`${item.student.id}:${audience}`];
+                  if (!staged || staged.tone !== data.tone || staged.channel !== data.channel || staged.assignmentId !== issue?.assignmentId) {
+                    return null;
+                  }
+                  return (
+                    <div key={audience} className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4">
+                      <p className="text-sm font-semibold">{t("pendingTitle")}</p>
+                      <p className="mt-1 text-sm leading-6 text-amber-950">{t("pendingHint")}</p>
+                      <label className="mt-3 block text-sm font-medium" htmlFor={`draft-${item.student.id}-${audience}`}>
+                        {t("draftEditorLabel")} · {audience === "parent" ? t("approveParent") : t("approveStudent")}
+                      </label>
+                      <textarea
+                        id={`draft-${item.student.id}-${audience}`}
+                        className={`${inputClass} mt-1.5 min-h-40`}
+                        value={staged.text}
+                        onChange={(event) => {
+                          const value = event.target.value;
+                          setPending((current) => {
+                            const key = `${item.student.id}:${audience}`;
+                            const existing = current[key];
+                            if (!existing) return current;
+                            return { ...current, [key]: { ...existing, text: value } };
+                          });
+                        }}
+                      />
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          className={buttonClass.primary}
+                          disabled={!staged.text.trim()}
+                          onClick={() =>
+                            commitPending(
+                              item.student.id,
+                              audience,
+                              item.student.nameAr,
+                              item.student.nameEn,
+                              assignment?.titleAr ?? "",
+                              assignment?.titleEn ?? "",
+                            )
+                          }
+                        >
+                          {t("approveEdited")}
+                        </button>
+                        <button
+                          type="button"
+                          className={buttonClass.secondary}
+                          onClick={() => rejectPending(item.student.id, audience, item.student.nameAr, item.student.nameEn)}
+                        >
+                          {t("rejectDraft")}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+                {approvals.map((approval) => (
+                  <div key={approval.id} className="mt-4 rounded-2xl bg-sand px-4 py-4">
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="text-sm font-semibold">{t("approvedDraft")}</p>
                       <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-950">{t("simDraft")}</span>
@@ -282,7 +396,7 @@ export function Inbox() {
                       ) : null}
                     </div>
                   </div>
-                ) : null}
+                ))}
               </li>
             );
           })}

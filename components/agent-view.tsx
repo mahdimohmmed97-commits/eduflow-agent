@@ -63,6 +63,25 @@ export function AgentView() {
   const summaryKey = JSON.stringify(summaryRequest);
   const visibleSummary = summary && summary.key === summaryKey ? summary : null;
 
+  function editReminder(studentId: string, field: "studentMessage" | "parentMessage", value: string) {
+    setReminders((current) => {
+      if (!current) return current;
+      return {
+        ...current,
+        drafts: current.drafts.map((draft) => (draft.studentId === studentId ? { ...draft, [field]: value } : draft)),
+      };
+    });
+  }
+
+  function rejectReminder(studentId: string) {
+    setReminders((current) => {
+      if (!current) return current;
+      const drafts = current.drafts.filter((draft) => draft.studentId !== studentId);
+      if (drafts.length === 0) return null;
+      return { ...current, drafts };
+    });
+  }
+
   async function generateReminders() {
     if (!assignment || selectedIds.length === 0) return;
     const request = buildReminders(record, draftLocale, assignment.id, selectedIds);
@@ -256,12 +275,25 @@ export function AgentView() {
                           <p className="text-xs font-semibold uppercase tracking-wide text-gold-2">{t("draftOnlyShort")}</p>
                           <h3 className="text-lg font-semibold">{name}</h3>
                         </div>
-                        <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-950 ring-1 ring-amber-200">
-                          {t("draftMark")}
-                        </span>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-950 ring-1 ring-amber-200">
+                            {t("draftMark")}
+                          </span>
+                          <button type="button" className={buttonClass.secondary} onClick={() => rejectReminder(draft.studentId)}>
+                            {t("rejectDraft")}
+                          </button>
+                        </div>
                       </div>
                       <div className="grid gap-4 lg:grid-cols-2">
-                        <MessageCard title={t("toStudent")} who={name} text={draft.studentMessage} copyLabel={t("copyStudent")} copiedLabel={t("copied")} />
+                        <MessageCard
+                          title={t("toStudent")}
+                          who={name}
+                          text={draft.studentMessage}
+                          copyLabel={t("copyStudent")}
+                          copiedLabel={t("copied")}
+                          editorLabel={t("draftEditorLabel")}
+                          onTextChange={(value) => editReminder(draft.studentId, "studentMessage", value)}
+                        />
                         <MessageCard
                           title={t("toParent")}
                           who={parent}
@@ -270,6 +302,8 @@ export function AgentView() {
                           text={draft.parentMessage}
                           copyLabel={t("copyParent")}
                           copiedLabel={t("copied")}
+                          editorLabel={t("draftEditorLabel")}
+                          onTextChange={(value) => editReminder(draft.studentId, "parentMessage", value)}
                           warm
                         />
                       </div>
@@ -359,6 +393,8 @@ function MessageCard({
   copiedLabel,
   phone,
   phoneHint,
+  editorLabel,
+  onTextChange,
   warm = false,
 }: {
   title: string;
@@ -368,6 +404,8 @@ function MessageCard({
   copiedLabel: string;
   phone?: string;
   phoneHint?: string;
+  editorLabel?: string;
+  onTextChange?: (value: string) => void;
   warm?: boolean;
 }) {
   return (
@@ -380,7 +418,16 @@ function MessageCard({
           {phoneHint ? ` · ${phoneHint}` : ""}
         </p>
       ) : null}
-      <p className="mt-3 flex-1 whitespace-pre-wrap text-sm leading-7">{text}</p>
+      {onTextChange ? (
+        <textarea
+          aria-label={editorLabel ?? title}
+          className={`${inputClass} mt-3 min-h-48 flex-1`}
+          value={text}
+          onChange={(event) => onTextChange(event.target.value)}
+        />
+      ) : (
+        <p className="mt-3 flex-1 whitespace-pre-wrap text-sm leading-7">{text}</p>
+      )}
       <div className="mt-4">
         <CopyButton text={text} label={copyLabel} copiedLabel={copiedLabel} />
       </div>

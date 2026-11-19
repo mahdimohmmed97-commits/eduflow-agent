@@ -749,7 +749,7 @@ function meta(value: unknown, max: number): string {
 
 function idField(value: unknown, max = 80): string {
   if (typeof value !== "string") return "";
-  const clean = value.replace(/[\u0000-\u001F\u007F]/g, " ").replace(/\s+/g, " ").trim();
+  const clean = value.replace(/[\u0000-\u001F\u007F]/g, " ").replace(/\s+/g, " ").trim().toLowerCase();
   if (!clean || clean.length > max) return "";
   return clean;
 }

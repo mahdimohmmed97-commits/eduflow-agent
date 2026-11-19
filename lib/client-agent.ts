@@ -14,6 +14,7 @@ export async function runAgent(payload: AgentRequest): Promise<AgentRun> {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(explained.request),
+      signal: AbortSignal.timeout(4_000),
     });
     if (response.status === 400) {
       let error: AgentRequestError = "invalid_request";

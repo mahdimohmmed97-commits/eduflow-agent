@@ -1,5 +1,11 @@
 # Changelog
 
+## Review before merge
+
+- Student ids are identifiers. The parser trims whitespace and lowercases them, so `Stu-01` and `stu-01` are the same id. Names are not lowercased.
+- Preparing a draft no longer marks it approved. The teacher can edit the text, reject it, or approve that exact text. Copying still does not send. The button label is a role chosen by the page, not a login check.
+- If the draft request does not finish within four seconds, or the browser is offline, the page shows the local template instead of leaving the button spinning.
+
 ## Phase 1 — safety and reliability
 
 This pass starts from Pull Request #1 (`cursor/eduflow-agent-prototype-a5df`). `main` still contains only the original README, so the prototype code is not there yet. These fixes sit on a new branch and do not merge or deploy anything.
@@ -20,7 +26,7 @@ This pass starts from Pull Request #1 (`cursor/eduflow-agent-prototype-a5df`). `
 - Reminder requests with a repeated student id return `400` and `duplicate_student_id`. Summary flags may still name the same student once per assignment, because that is a real record. An identical flag repeated twice is rejected. A rate above 100, a non-boolean due flag, and other incomplete bodies return `invalid_request`.
 - Model text is kept only when it stays on the supplied names and figures. A full mark, a guaranteed grade, a school policy, an unknown percentage, a phone number, or another student’s name is replaced with the local template. Students who were not in the request are dropped.
 - Missing submission rows count as not submitted for students on that class roster. A row that says the work was submitted wins over a conflicting “not submitted” row, so the agent does not invent a missing assignment. Follow-up still ignores work that is not past due. The teacher can now save a status for a roster student who had no row.
-- The browser does not draft a request the checker has already rejected. Network failures still use the local template for a valid request.
+- The browser does not draft a request the checker has already rejected. A network failure, including a request that does not finish within four seconds, still uses the local template for a valid request.
 - A draft starts as waiting for the teacher. Only `actor: "teacher"` can approve it. Approval stores the draft and sets nothing to sent. `deliverApprovedDraft` always returns `sending_disabled`. The only API route is `POST /api/agent`, and the only outbound call it can make is OpenAI chat completions for wording.
 - `npm test` runs the new Node tests. GitHub Actions runs it with lint and typecheck.
 
