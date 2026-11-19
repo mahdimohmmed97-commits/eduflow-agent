@@ -71,6 +71,10 @@ export function Inbox() {
         },
       ],
     });
+    if (!outcome.ok) {
+      if (manageBusy) setBusy(null);
+      return;
+    }
     const draft = outcome.result.kind === "reminders" ? outcome.result.drafts[0] : undefined;
     const fullText = audience === "parent" ? draft?.parentMessage : draft?.studentMessage;
     if (!fullText) {
@@ -105,6 +109,7 @@ export function Inbox() {
       text: presented.text,
       subject: presented.subject,
       source: outcome.source,
+      actor: "teacher",
       textAr: `اعتمدت مسودة ${channelAr} لـ${whoAr} عن «${assignment.titleAr}». لم تُرسل.`,
       textEn: `Approved a ${channelEn} draft for ${whoEn} about “${assignment.titleEn}”. It was not sent.`,
     });

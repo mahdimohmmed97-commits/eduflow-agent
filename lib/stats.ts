@@ -17,12 +17,41 @@ export type FollowUp = {
   status: Exclude<SubmissionStatus, "submitted">;
 };
 
+export function resolvedStatus(data: DemoData, assignmentId: string, studentId: string): SubmissionStatus {
+  const rows = data.submissions.filter((item) => item.assignmentId === assignmentId && item.studentId === studentId);
+  if (rows.some((item) => item.status === "submitted")) return "submitted";
+  if (rows.some((item) => item.status === "late")) return "late";
+  return "not_submitted";
+}
+
+export function studentsWhoHaveNotSubmitted(data: DemoData, assignmentId: string): Student[] {
+  const assignment = data.assignments.find((item) => item.id === assignmentId);
+  if (!assignment) return [];
+  return data.students.filter(
+    (student) => student.classId === assignment.classId && resolvedStatus(data, assignmentId, student.id) === "not_submitted",
+  );
+}
+
 export function tally(data: DemoData, assignmentId: string): Tally {
-  const rows = data.submissions.filter((item) => item.assignmentId === assignmentId);
-  const submitted = rows.filter((item) => item.status === "submitted").length;
-  const late = rows.filter((item) => item.status === "late").length;
-  const notSubmitted = rows.filter((item) => item.status === "not_submitted").length;
-  return { submitted, late, notSubmitted, total: rows.length };
+  const assignment = data.assignments.find((item) => item.id === assignmentId);
+  if (!assignment) {
+    const rows = data.submissions.filter((item) => item.assignmentId === assignmentId);
+    const submitted = rows.filter((item) => item.status === "submitted").length;
+    const late = rows.filter((item) => item.status === "late").length;
+    const notSubmitted = rows.filter((item) => item.status === "not_submitted").length;
+    return { submitted, late, notSubmitted, total: rows.length };
+  }
+  const roster = data.students.filter((student) => student.classId === assignment.classId);
+  let submitted = 0;
+  let late = 0;
+  let notSubmitted = 0;
+  for (const student of roster) {
+    const status = resolvedStatus(data, assignmentId, student.id);
+    if (status === "submitted") submitted += 1;
+    else if (status === "late") late += 1;
+    else notSubmitted += 1;
+  }
+  return { submitted, late, notSubmitted, total: roster.length };
 }
 
 export function pastDueTally(data: DemoData): Tally & { rate: number | null } {
@@ -77,11 +106,9 @@ export function listFollowUps(data: DemoData): FollowUp[] {
     if (!schoolClass) continue;
     const roster = data.students.filter((item) => item.classId === assignment.classId);
     for (const student of roster) {
-      const submission = data.submissions.find(
-        (item) => item.assignmentId === assignment.id && item.studentId === student.id,
-      );
-      if (!submission || submission.status === "submitted") continue;
-      items.push({ student, assignment, schoolClass, status: submission.status });
+      const status = resolvedStatus(data, assignment.id, student.id);
+      if (status === "submitted") continue;
+      items.push({ student, assignment, schoolClass, status });
     }
   }
   return items;

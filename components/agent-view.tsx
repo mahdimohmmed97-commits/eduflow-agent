@@ -16,7 +16,7 @@ import { runAgent, type ShownSource } from "@/lib/client-agent";
 import type { MessageKey } from "@/lib/i18n";
 import { formatDate, isPastDue, zoneOf } from "@/lib/dates";
 import { logActivity, useEduFlow } from "@/lib/store";
-import { classOnTimeRate, listFollowUps, tally } from "@/lib/stats";
+import { classOnTimeRate, listFollowUps, resolvedStatus, tally } from "@/lib/stats";
 import { givenName, tx } from "@/lib/text";
 import { TEACHER, type DemoData, type Locale } from "@/lib/types";
 
@@ -69,6 +69,10 @@ export function AgentView() {
     if (!request) return;
     setLoading(true);
     const outcome = await runAgent(request);
+    if (!outcome.ok) {
+      setLoading(false);
+      return;
+    }
     const drafts = outcome.result.kind === "reminders" ? outcome.result.drafts : [];
     setReminders({ key: reminderKey, source: outcome.source, drafts });
     logActivity(
@@ -83,6 +87,10 @@ export function AgentView() {
     if (!summaryRequest) return;
     setLoading(true);
     const outcome = await runAgent(summaryRequest);
+    if (!outcome.ok) {
+      setLoading(false);
+      return;
+    }
     const text = outcome.result.kind === "summary" ? outcome.result.summary : "";
     setSummary({ key: summaryKey, source: outcome.source, text });
     logActivity("summary", "صيغ ملخص الأسبوع للمراجعة. لم يُرسل.", "Drafted the weekly summary for review. It was not sent.");
@@ -394,8 +402,8 @@ function buildReminders(data: DemoData, locale: Locale, assignmentId: string, st
   const students = data.students
     .filter((student) => student.classId === schoolClass.id && allowed.has(student.id))
     .flatMap((student) => {
-      const submission = data.submissions.find((item) => item.assignmentId === assignment.id && item.studentId === student.id);
-      if (!submission || submission.status === "submitted") return [];
+      const status = resolvedStatus(data, assignment.id, student.id);
+      if (status === "submitted") return [];
       const name = tx(locale, student.nameAr, student.nameEn);
       return [
         {
@@ -404,7 +412,7 @@ function buildReminders(data: DemoData, locale: Locale, assignmentId: string, st
           givenName: givenName(name),
           gender: student.gender,
           parentName: tx(locale, student.parentNameAr, student.parentNameEn),
-          status: submission.status,
+          status,
         },
       ];
     });

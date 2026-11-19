@@ -1,19 +1,34 @@
-import { localResult, type AgentRequest, type AgentResult } from "@/lib/agent";
+import { explainAgentRequest, groundAgentResult, localResult, type AgentRequest, type AgentRequestError, type AgentResult } from "@/lib/agent";
 
 export type ShownSource = "openai" | "template" | "local";
 
-export async function runAgent(payload: AgentRequest): Promise<{ source: ShownSource; result: AgentResult }> {
+export type AgentRun =
+  | { ok: true; source: ShownSource; result: AgentResult }
+  | { ok: false; error: AgentRequestError };
+
+export async function runAgent(payload: AgentRequest): Promise<AgentRun> {
+  const explained = explainAgentRequest(payload);
+  if (!explained.ok) return explained;
   try {
     const response = await fetch("/api/agent", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(explained.request),
     });
-    if (!response.ok) return { source: "local", result: localResult(payload) };
-    const result = (await response.json()) as AgentResult;
-    if (!result || result.kind !== payload.kind) return { source: "local", result: localResult(payload) };
-    return { source: result.source === "openai" ? "openai" : "template", result };
+    if (response.status === 400) {
+      let error: AgentRequestError = "invalid_request";
+      try {
+        const body = (await response.json()) as { error?: unknown };
+        if (body.error === "duplicate_student_id") error = "duplicate_student_id";
+      } catch {
+        error = "invalid_request";
+      }
+      return { ok: false, error };
+    }
+    if (!response.ok) return { ok: true, source: "local", result: localResult(explained.request) };
+    const grounded = groundAgentResult(explained.request, await response.json());
+    return { ok: true, source: grounded.source === "openai" ? "openai" : "template", result: grounded };
   } catch {
-    return { source: "local", result: localResult(payload) };
+    return { ok: true, source: "local", result: localResult(explained.request) };
   }
 }
