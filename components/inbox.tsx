@@ -457,7 +457,7 @@ export function Inbox() {
 }
 
 function sourceLabel(source: DraftSource, t: (key: MessageKey) => string) {
-  if (source === "openai") return t("sourceBadgeAi");
+  if (source === "openai" || source === "anthropic") return t("sourceBadgeAi");
   if (source === "local") return t("sourceBadgeLocal");
   return t("sourceBadgeTemplate");
 }
@@ -486,7 +486,7 @@ function StatusBadge({ label, tone }: { label: string; tone: "pending" | "approv
 }
 
 function SourceBadge({ source, label }: { source: DraftSource; label: string }) {
-  const toneClass = source === "openai" ? "bg-navy text-white" : source === "local" ? "bg-white text-ink ring-1 ring-line" : "bg-teal/10 text-teal";
+  const toneClass = source === "openai" || source === "anthropic" ? "bg-navy text-white" : source === "local" ? "bg-white text-ink ring-1 ring-line" : "bg-teal/10 text-teal";
   return <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${toneClass}`}>{label}</span>;
 }
 

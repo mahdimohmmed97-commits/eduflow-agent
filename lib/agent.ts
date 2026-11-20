@@ -60,9 +60,11 @@ export type ReminderDraft = {
   parentMessage: string;
 };
 
+export type ModelSource = "openai" | "anthropic";
+
 export type AgentResult =
-  | { source: "openai" | "template"; kind: "reminders"; drafts: ReminderDraft[] }
-  | { source: "openai" | "template"; kind: "summary"; summary: string };
+  | { source: ModelSource | "template"; kind: "reminders"; drafts: ReminderDraft[] }
+  | { source: ModelSource | "template"; kind: "summary"; summary: string };
 
 type ChatMessage = { role: "system" | "user"; content: string };
 
@@ -159,7 +161,7 @@ export function messagesFor(request: AgentRequest): ChatMessage[] {
   ];
 }
 
-export function resultFromModel(request: AgentRequest, content: string): AgentResult {
+export function resultFromModel(request: AgentRequest, content: string, modelSource: ModelSource = "openai"): AgentResult {
   const parsed = readJson(content);
   if (request.kind === "reminders") {
     const drafts = (Array.isArray(parsed?.drafts) ? parsed.drafts : []).map(asDraft);
@@ -177,23 +179,24 @@ export function resultFromModel(request: AgentRequest, content: string): AgentRe
       const backup = fallback[index];
       return draft.studentMessage !== backup?.studentMessage || draft.parentMessage !== backup?.parentMessage;
     });
-    return { source: usedModel ? "openai" : "template", kind: "reminders", drafts: merged };
+    return { source: usedModel ? modelSource : "template", kind: "reminders", drafts: merged };
   }
 
   const summary = acceptSummary(request, clip(parsed?.summary, 6000));
   const usedModel = summary !== summaryTemplate(request);
-  return { source: usedModel ? "openai" : "template", kind: "summary", summary };
+  return { source: usedModel ? modelSource : "template", kind: "summary", summary };
 }
 
 export function groundAgentResult(request: AgentRequest, value: unknown): AgentResult {
   if (!value || typeof value !== "object") return localResult(request);
-  const record = value as { kind?: unknown; drafts?: unknown; summary?: unknown };
+  const record = value as { kind?: unknown; drafts?: unknown; summary?: unknown; source?: unknown };
+  const modelSource: ModelSource = record.source === "anthropic" ? "anthropic" : "openai";
   if (request.kind === "reminders") {
     if (record.kind !== "reminders") return localResult(request);
-    return resultFromModel(request, JSON.stringify({ drafts: record.drafts }));
+    return resultFromModel(request, JSON.stringify({ drafts: record.drafts }), modelSource);
   }
   if (record.kind !== "summary") return localResult(request);
-  return resultFromModel(request, JSON.stringify({ summary: record.summary }));
+  return resultFromModel(request, JSON.stringify({ summary: record.summary }), modelSource);
 }
 
 export type AgentRequestError = "invalid_request" | "duplicate_student_id";

@@ -282,7 +282,7 @@ export function AgentView() {
                             {t("statusPending")}
                           </span>
                           <span className="rounded-full bg-teal/10 px-3 py-1 text-xs font-semibold text-teal">
-                            {visibleReminders.source === "openai" ? t("sourceBadgeAi") : visibleReminders.source === "local" ? t("sourceBadgeLocal") : t("sourceBadgeTemplate")}
+                            {visibleReminders.source === "openai" || visibleReminders.source === "anthropic" ? t("sourceBadgeAi") : visibleReminders.source === "local" ? t("sourceBadgeLocal") : t("sourceBadgeTemplate")}
                           </span>
                           <button type="button" className={buttonClass.secondary} onClick={() => rejectReminder(draft.studentId)}>
                             {t("rejectDraft")}
@@ -459,7 +459,7 @@ function FallbackLine({ fallback, t }: { fallback: ConnectionFallback | null; t:
 }
 
 function sourceCaption(source: ShownSource, t: Translator) {
-  if (source === "openai") return t("openaiCaption");
+  if (source === "openai" || source === "anthropic") return t("openaiCaption");
   if (source === "local") return t("offlineCaption");
   return t("templateCaption");
 }

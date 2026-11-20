@@ -262,6 +262,8 @@ test("with no API key the agent route returns the local template and does not ca
   const originalFetch = globalThis.fetch;
   const calls: string[] = [];
   delete process.env.OPENAI_API_KEY;
+  delete process.env.ANTHROPIC_API_KEY;
+  delete process.env.AI_PROVIDER;
   globalThis.fetch = async (input, init) => {
     const url = String(input);
     calls.push(url);
@@ -301,6 +303,8 @@ test("the only API drafts from the supplied record and never delivers a message"
   const originalFetch = globalThis.fetch;
   const calls: string[] = [];
   delete process.env.OPENAI_API_KEY;
+  delete process.env.ANTHROPIC_API_KEY;
+  delete process.env.AI_PROVIDER;
   globalThis.fetch = async (input) => {
     calls.push(String(input));
     return new Response("should not be called", { status: 500 });
@@ -339,6 +343,8 @@ test("the only API drafts from the supplied record and never delivers a message"
     const oversized = await POST(new Request("http://localhost/api/agent", { method: "POST", body: `{"pad":"${"x".repeat(64_000)}"}` }));
     assert.equal(oversized.status, 413);
 
+    delete process.env.AI_PROVIDER;
+    delete process.env.ANTHROPIC_API_KEY;
     process.env.OPENAI_API_KEY = "test-key";
     globalThis.fetch = async (input) => {
       calls.push(String(input));
@@ -444,8 +450,9 @@ test("application code has no outbound delivery endpoint", () => {
     }
   }
   assert.deepEqual(fetches.sort(), [
-    "app/api/agent/route.ts https://api.openai.com/v1/chat/completions",
     "lib/client-agent.ts /api/agent",
+    "lib/model-provider.ts https://api.anthropic.com/v1/messages",
+    "lib/model-provider.ts https://api.openai.com/v1/chat/completions",
   ]);
 });
 

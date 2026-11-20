@@ -56,7 +56,7 @@ export type Submission = {
   note: string;
 };
 
-export type DraftSource = "openai" | "template" | "local";
+export type DraftSource = "openai" | "anthropic" | "template" | "local";
 
 export type DraftFallback = "timeout" | "offline" | "server" | null;
 
@@ -101,7 +101,7 @@ export type Approval = {
   text: string;
   subject: string;
   locale?: Locale;
-  source?: "openai" | "template" | "local";
+  source?: DraftSource;
   approvedAt: string;
 };
 

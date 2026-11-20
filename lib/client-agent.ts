@@ -1,6 +1,6 @@
 import { explainAgentRequest, groundAgentResult, localResult, type AgentRequest, type AgentRequestError, type AgentResult } from "@/lib/agent";
 
-export type ShownSource = "openai" | "template" | "local";
+export type ShownSource = "openai" | "anthropic" | "template" | "local";
 
 export type ConnectionFallback = "timeout" | "offline" | "server";
 
@@ -40,7 +40,8 @@ export async function runAgent(payload: AgentRequest): Promise<AgentRun> {
     }
     if (!response.ok) return localRun(explained.request, "server");
     const grounded = groundAgentResult(explained.request, await response.json());
-    return { ok: true, source: grounded.source === "openai" ? "openai" : "template", fallback: null, result: grounded };
+    const source = grounded.source === "openai" || grounded.source === "anthropic" ? grounded.source : "template";
+    return { ok: true, source, fallback: null, result: grounded };
   } catch (error) {
     return localRun(explained.request, connectionFallback(error));
   }
