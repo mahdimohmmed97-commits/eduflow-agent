@@ -19,7 +19,11 @@ This run is the one on the tree that updates the docs to the official guide. No 
 # duration_ms 4220.219759
 ```
 
-The 17 names are the same ones listed in the earlier section below. GitHub Actions for the commit that contains this section is recorded after that workflow finishes. It is not claimed here yet.
+The 17 names are the same ones listed in the earlier section below. GitHub Actions on commit `4cc350da0667193686874295a18dfbf1f22e6eb3` completed with conclusion `success`:
+
+https://github.com/mahdimohmmed97-commits/eduflow-agent/actions/runs/44766553686
+
+That workflow runs lint, typecheck, test, and build. This sentence was added after that run, so the commit that contains the sentence has a later Actions run.
 
 ## Earlier local run on 20 November 2026
 
