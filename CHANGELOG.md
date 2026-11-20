@@ -1,5 +1,11 @@
 # Changelog
 
+## Phase 2 review
+
+- The home page and dashboard no longer show an estimated time saved, a story improvement rate, or a model-cost guess.
+- The measured preparation time says it is not time saved for the teacher. Counts from the fictional record are labeled as demo data.
+- Approving edited text, including through `/api/approve`, runs the claims check and still does not send.
+
 ## Phase 2 — teacher experience and measured follow-up
 
 - The inbox shows the prepare, edit, and approve-or-reject steps, and each draft is marked pending review, approved, or rejected.

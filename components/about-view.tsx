@@ -28,7 +28,7 @@ const copy = {
       "ربط بسجل مدرسة حقيقي.",
       "حسابات لأكثر من معلم، وصلاحيات.",
       "رد ولي الأمر داخل المنتج.",
-      "قياس وقت المعلمة مع مستخدمين حقيقيين. رقم الدقائق الموفّرة تقدير.",
+      "قياس وقت المعلمة مع مستخدمين حقيقيين. لا نعرض رقم دقائق موفّرة.",
     ],
     limitItems: [
       "لا يرسل أي رسالة، حتى بعد الاعتماد.",
@@ -45,9 +45,9 @@ const copy = {
     ],
     costItems: [
       "بلا مفتاح نموذج: تكلفة الصياغة صفر. هذا مسار العرض الافتراضي.",
-      "مع gpt-4o-mini: تقدير أقل من 0.01 درهم لمسودة طالب وولي أمر، وأقل من 0.05 درهم لخطة من أربع مسودات عاجلة. تقدير من أسعار النموذج العلنية، لا فاتورة مقاسة.",
-      "الوقت الموفّر (6 دقائق للمسودة) تقدير لم يُقاس مع معلمين.",
-      "نسبة التسليم في الموعد محسوبة من سجل العرض، وليست تقدير سوق.",
+      "لا فاتورة مقاسة لتكلفة النموذج، لذلك لا نعرض مبلغاً.",
+      "لا نعرض وقتاً موفّراً للمعلمة. المدة الظاهرة هي وقت التجهيز المقاس فقط.",
+      "نسبة التسليم في الموعد محسوبة من سجل العرض الخيالي، وليست نتيجة مدرسة.",
     ],
     oversightItems: [
       "كل مسودة تنتظر زر الاعتماد.",
@@ -81,7 +81,7 @@ const copy = {
       "A connection to a real school record.",
       "Accounts for more than one teacher, and permissions.",
       "A parent reply inside the product.",
-      "A timed study with real teachers. The minutes-saved figure is an estimate.",
+      "A timed study with real teachers. No minutes-saved figure is shown.",
     ],
     limitItems: [
       "It sends no message, even after approval.",
@@ -98,9 +98,9 @@ const copy = {
     ],
     costItems: [
       "With no model key, drafting costs nothing. That is the default demo path.",
-      "With gpt-4o-mini: an estimate under 0.01 AED for one student-and-parent draft, and under 0.05 AED for a plan of four urgent drafts. Estimated from public model prices, not a measured bill.",
-      "Time saved (6 minutes a draft) is an estimate and was not measured with teachers.",
-      "The on-time rate is calculated from the demo record. It is not a market estimate.",
+      "There is no measured model bill, so no amount is shown.",
+      "No teacher time-saved figure is shown. The duration on screen is measured preparation time only.",
+      "The on-time rate is calculated from the fictional demo record. It is not a school result.",
     ],
     oversightItems: [
       "Every draft waits for the approve button.",

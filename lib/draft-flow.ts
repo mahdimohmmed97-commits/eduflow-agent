@@ -77,6 +77,7 @@ export function approveFlowDraft(
       text: draft.text,
     }),
     actor,
+    { allowedParts: draft.allowedParts, otherNames: draft.otherNames },
   );
   if (!decision.ok) return { ok: false, reason: decision.error === "empty_draft" ? "empty" : decision.error, sent: false, draft };
   const delivery = deliverApprovedDraft(decision.draft);

@@ -220,7 +220,8 @@ function AssignmentDetail({ id, data, locale, t }: { id: string; data: DemoData;
         </div>
       </div>
 
-      <div className="mt-5 grid gap-3 sm:grid-cols-3">
+      <p className="mt-5 text-sm leading-6 text-muted">{t("demoCountsLabel")}</p>
+      <div className="mt-3 grid gap-3 sm:grid-cols-3">
         <CountCard label={t("onTimeWork")} value={counts.submitted} tone="text-emerald-800" />
         <CountCard label={t("lateWork")} value={counts.late} tone="text-amber-800" />
         <CountCard label={t("missingWork")} value={counts.notSubmitted} tone="text-rose-800" />

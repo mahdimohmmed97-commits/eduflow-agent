@@ -228,17 +228,22 @@ test("a draft stays unsent until a teacher approves it, and approval still does 
   assert.equal(pending.status, "pending_teacher_approval");
   assert.equal(pending.sent, false);
 
+  const context = { allowedParts: ["A draft for the teacher to review."], otherNames: [] };
   for (const actor of ["agent", "system"] as const) {
-    const refused = approveDraft(pending, actor);
+    const refused = approveDraft(pending, actor, context);
     assert.equal(refused.ok, false);
     if (!refused.ok) {
       assert.equal(refused.error, "teacher_approval_required");
       assert.equal(refused.sent, false);
     }
   }
-  assert.equal(approveDraft({ ...pending, text: "  " }, "teacher").ok, false);
+  assert.equal(approveDraft({ ...pending, text: "  " }, "teacher", context).ok, false);
+  const unsafe = approveDraft({ ...pending, text: "Layla will get full marks." }, "teacher", context);
+  assert.equal(unsafe.ok, false);
+  assert.equal(unsafe.sent, false);
+  if (!unsafe.ok) assert.equal(unsafe.error, "unsupported_claim");
 
-  const approved = approveDraft(pending, "teacher");
+  const approved = approveDraft(pending, "teacher", context);
   assert.equal(approved.ok, true);
   if (!approved.ok) return;
   assert.equal(approved.draft.status, "approved");
@@ -383,7 +388,10 @@ test("application code has no outbound delivery endpoint", () => {
   const files = walk(path.join(root, "app")).concat(walk(path.join(root, "lib")), walk(path.join(root, "components")));
   const fetches: string[] = [];
   const routes = files.filter((file) => file.includes(`${path.sep}app${path.sep}api${path.sep}`) && file.endsWith(`${path.sep}route.ts`));
-  assert.deepEqual(routes.map((file) => path.relative(root, file)), [path.join("app", "api", "agent", "route.ts")]);
+  assert.deepEqual(
+    routes.map((file) => path.relative(root, file)).sort(),
+    [path.join("app", "api", "agent", "route.ts"), path.join("app", "api", "approve", "route.ts")],
+  );
   for (const file of files) {
     if (!/\.(ts|tsx)$/.test(file)) continue;
     const source = readFileSync(file, "utf8");

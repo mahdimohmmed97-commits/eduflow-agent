@@ -2,20 +2,12 @@
 
 import Link from "next/link";
 import { ContentSkeleton } from "@/components/skeletons";
+import { ValuePanel } from "@/components/value-panel";
 import { buttonClass } from "@/components/ui";
 import { useEduFlow } from "@/lib/store";
-import { MINUTES_PER_DRAFT, trendSeries } from "@/lib/stats";
-import { fill } from "@/lib/text";
-import { dailyActions } from "@/lib/risk";
 
 export function Landing() {
   const { data, t } = useEduFlow();
-  const minutes = data ? dailyActions(data).length * MINUTES_PER_DRAFT : 48;
-  const series = data ? trendSeries(data) : [];
-  const from = series[0]?.onTimeRate ?? 38;
-  const to = series[series.length - 1]?.onTimeRate ?? 57;
-  const minuteLabel = data ? fill(t("timeSavedValue"), { minutes }) : t("statMinutes");
-  const trendLabel = data ? fill(t("pointsUp"), { from, to }) : t("statTrend");
 
   return (
     <div className="mx-auto max-w-6xl px-5 pb-16 pt-4 sm:px-8">
@@ -29,27 +21,12 @@ export function Landing() {
             {t("startTask")}
           </Link>
           <Link href="/dashboard" className="inline-flex min-h-11 items-center rounded-xl bg-white/10 px-5 py-2.5 text-sm font-semibold text-white ring-1 ring-white/30">
-            {t("seeImpact")}
+            {t("navDashboard")}
           </Link>
         </div>
       </section>
 
-      {!data ? <div className="mt-8"><ContentSkeleton /></div> : null}
-
-      <section className="mt-6 grid gap-4 md:grid-cols-3" aria-label={t("impactTitle")}>
-        <article className="rounded-3xl border border-line bg-paper p-5">
-          <p className="text-3xl font-semibold tabular-nums text-teal">{minuteLabel}</p>
-          <p className="mt-2 text-sm leading-6 text-muted">{t("statMinutesHint")}</p>
-        </article>
-        <article className="rounded-3xl border border-line bg-paper p-5">
-          <p className="text-3xl font-semibold tabular-nums text-ink">{trendLabel}</p>
-          <p className="mt-2 text-sm leading-6 text-muted">{t("statTrendHint")}</p>
-        </article>
-        <article className="rounded-3xl border border-line bg-paper p-5">
-          <p className="text-3xl font-semibold tabular-nums text-ink">{t("statSent")}</p>
-          <p className="mt-2 text-sm leading-6 text-muted">{t("statSentHint")}</p>
-        </article>
-      </section>
+      {!data ? <div className="mt-8"><ContentSkeleton /></div> : <div className="mt-6"><ValuePanel /></div>}
 
       <section className="mt-6 grid gap-4 md:grid-cols-3">
         {[

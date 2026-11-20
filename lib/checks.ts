@@ -45,8 +45,8 @@ export function runReliabilityChecks(): CheckResult[] {
     {
       id: "live-rate",
       pass: rate !== null && rate > 0 && rate < 100,
-      textAr: `نسبة التسليم في الموعد محسوبة من السجل: ${rate ?? "—"}%. ليست تقديراً.`,
-      textEn: `On-time rate calculated from the record: ${rate ?? "—"}%. This one is measured, not estimated.`,
+      textAr: `نسبة التسليم في الموعد محسوبة من سجل العرض الخيالي: ${rate ?? "—"}%. ليست نتيجة مدرسة.`,
+      textEn: `On-time rate calculated from the fictional demo record: ${rate ?? "—"}%. This is not a school result.`,
     },
     {
       id: "empty-ask",

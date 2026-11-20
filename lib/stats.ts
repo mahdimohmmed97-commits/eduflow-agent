@@ -1,8 +1,6 @@
 import { isPastDue, zoneOf } from "@/lib/dates";
 import type { Assignment, DemoData, SchoolClass, Student, SubmissionStatus } from "@/lib/types";
 
-export const MINUTES_PER_DRAFT = 6;
-
 export type Tally = {
   submitted: number;
   late: number;

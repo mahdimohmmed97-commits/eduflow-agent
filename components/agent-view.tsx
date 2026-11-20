@@ -335,6 +335,7 @@ export function AgentView() {
             </select>
             <p className="mt-3 text-sm leading-6 text-muted">{t("summaryScope")}</p>
             <p className="mt-2 text-sm text-muted">{t("gradebookHint")}</p>
+            <p className="mt-2 text-sm text-muted">{t("demoRateLabel")}</p>
             <Button className="mt-4 w-full" onClick={() => void generateSummary()} disabled={loading || !summaryRequest}>
               {loading && tab === "summary" ? t("generating") : visibleSummary ? t("regenerate") : t("generateSummary")}
             </Button>

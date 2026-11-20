@@ -224,6 +224,8 @@ export function recordApproval(input: {
   actor: "teacher";
   textAr: string;
   textEn: string;
+  allowedParts: string[];
+  otherNames: string[];
 }) {
   update((data) => {
     const decision = approveDraft(
@@ -234,6 +236,7 @@ export function recordApproval(input: {
         text: input.text,
       }),
       input.actor,
+      { allowedParts: input.allowedParts, otherNames: input.otherNames },
     );
     if (!decision.ok || decision.draft.sent !== false) return;
     data.approvals = data.approvals.filter(
@@ -384,6 +387,7 @@ export function approvePreparedDraft(
         text: item.text,
       }),
       "teacher",
+      { allowedParts: item.allowedParts, otherNames: item.otherNames },
     );
     if (!decision.ok || decision.draft.sent !== false) {
       blocked = decision.ok ? "not_pending" : decision.error === "empty_draft" ? "empty" : decision.error;

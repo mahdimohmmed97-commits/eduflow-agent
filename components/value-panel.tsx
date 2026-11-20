@@ -18,11 +18,17 @@ export function ValuePanel() {
     <section className="rounded-3xl border border-line bg-paper p-4 shadow-sm sm:p-5" aria-label={t("measuredPanelTitle")}>
       <h2 className="text-lg font-semibold">{t("measuredPanelTitle")}</h2>
       <p className="mt-1 max-w-3xl text-sm leading-6 text-muted">{t("measuredHint")}</p>
+      <p className="mt-2 max-w-3xl text-sm font-semibold leading-6 text-ink">{t("measuredNotSaved")}</p>
       <dl className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
         {figures.map(([label, value]) => (
           <div key={label} className="rounded-2xl bg-sand px-3 py-3">
             <dt className="text-sm leading-5 text-muted">{label}</dt>
             <dd className="mt-1 text-2xl font-semibold tracking-tight">{value}</dd>
+            {label === t("measuredTime") ? <p className="mt-1 text-xs leading-5 text-ink">{t("measuredNotSaved")}</p> : null}
+            {label === t("measuredMissing") ? <p className="mt-1 text-xs leading-5 text-muted">{t("demoCountsLabel")}</p> : null}
+            {label === t("measuredPrepared") || label === t("measuredApproved") ? (
+              <p className="mt-1 text-xs leading-5 text-muted">{t("browserCountLabel")}</p>
+            ) : null}
           </div>
         ))}
       </dl>

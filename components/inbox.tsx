@@ -197,6 +197,7 @@ export function Inbox() {
           ))}
         </ol>
         <p className="mt-3 text-sm leading-6 text-muted">{t("roleNotIdentity")}</p>
+        <p className="mt-2 text-sm leading-6 text-muted">{t("riskDemoLabel")}</p>
       </section>
       <Reasoning />
       {notice ? (
