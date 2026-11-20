@@ -106,7 +106,11 @@ function getLocaleServer(): Locale {
 
 function write(data: DemoData) {
   const raw = JSON.stringify({ version: STORAGE_VERSION, data });
-  localStorage.setItem(STORAGE_KEY, raw);
+  try {
+    localStorage.setItem(STORAGE_KEY, raw);
+  } catch {
+    // Storage can be blocked. Keep the new story in memory for this page view.
+  }
   dataCache = { key: raw, data };
   emit();
 }
@@ -151,7 +155,11 @@ export function useEduFlow() {
 }
 
 export function setLocale(locale: Locale) {
-  localStorage.setItem(LOCALE_KEY, locale);
+  try {
+    localStorage.setItem(LOCALE_KEY, locale);
+  } catch {
+    // The toggle still notifies listeners. A blocked store keeps the previous language on the next load.
+  }
   emit();
 }
 
