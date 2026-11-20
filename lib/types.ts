@@ -103,6 +103,7 @@ export type Approval = {
   approvedAt: string;
 };
 
+/** Fictional weekly story points. Not a measured school outcome, and not rendered as a result. */
 export type WeekPoint = {
   weeksAgo: number;
   onTimeRate: number;

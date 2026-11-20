@@ -1,5 +1,11 @@
 # Changelog
 
+## Phase 3 — submission readiness notes
+
+- The README no longer describes an estimated time saved, a story improvement rate, or a model-cost guess. The weekly seed points 38, 46, and 52 stay in `lib/seed.ts` as fictional story data. They are not shown as an outcome.
+- The About page no longer says figures are marked as estimates, and it no longer points judges at a hosted link. There is no hosted copy.
+- Submission notes, a fixed demo scenario, a test report, an architecture note, and a local judge guide were added. Nothing was deployed.
+
 ## Phase 2 review
 
 - The home page and dashboard no longer show an estimated time saved, a story improvement rate, or a model-cost guess.
