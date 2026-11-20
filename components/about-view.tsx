@@ -6,7 +6,7 @@ import { useEduFlow } from "@/lib/store";
 const copy = {
   ar: {
     title: "عن الوكيل وحدوده",
-    body: "ما يعمل اليوم، وما هو مخطط، وأين يتوقف الإنسان. الأرقام المعلّمة كتقدير ليست نتيجة اختبار.",
+    body: "ما يعمل اليوم، وما هو مخطط، وأين يتوقف الإنسان. لا نعرض وقتاً موفّراً ولا تكلفة مقدّرة.",
     built: "يعمل الآن",
     planned: "مخطط ولم يُبنَ",
     limits: "حدود معروفة",
@@ -55,11 +55,11 @@ const copy = {
       "المعلمة تغيّر الحالة والنبرة والقناة واللغة.",
       "الطلب الغامض أو الخارج عن المهمة يتوقف ويُسجَّل.",
     ],
-    accessBody: "لا تسجيل دخول. افتح الرابط، وزر إعادة البيانات التجريبية يعيد قصة العرض إن تغيّر شيء. اتركوا الصفحة متاحة حتى نهاية البطولة.",
+    accessBody: "لا تسجيل دخول ولا نسخة مستضافة من هذا المستودع. شغّل التطبيق محلياً، وزر إعادة سيناريو العرض يعيد القصة الخيالية إن تغيّر شيء.",
   },
   en: {
     title: "About the agent and its limits",
-    body: "What works today, what is only planned, and where a person steps in. Figures marked as estimates are not test results.",
+    body: "What works today, what is only planned, and where a person steps in. No time-saved figure and no estimated cost are shown.",
     built: "Working now",
     planned: "Planned, not built",
     limits: "Known limits",
@@ -108,7 +108,7 @@ const copy = {
       "The teacher changes status, tone, channel, and language.",
       "An unclear or out-of-scope request stops and is logged.",
     ],
-    accessBody: "No login. Open the link. Reset demo data restores the story if anything changed. Keep the page available until the championship ends.",
+    accessBody: "No login, and this repository has no hosted copy. Run the app locally. Reset to demo scenario restores the fictional story if anything changed.",
   },
 } as const;
 

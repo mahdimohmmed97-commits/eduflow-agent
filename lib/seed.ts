@@ -233,6 +233,7 @@ export function createSeed(today = todayIso()): DemoData {
     approvals: [],
     drafts: [],
     measuredPrepareMs: 0,
+    // Fictional story points only (38, 46, 52). Not a measured outcome, and not shown in the interface.
     trend: [
       { weeksAgo: 3, onTimeRate: 38 },
       { weeksAgo: 2, onTimeRate: 46 },
