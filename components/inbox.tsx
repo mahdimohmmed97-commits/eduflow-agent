@@ -11,6 +11,7 @@ import type { MessageKey } from "@/lib/i18n";
 import { dailyActions, improvingStudents, type RiskPattern, type StudentRisk } from "@/lib/risk";
 import { ValuePanel } from "@/components/value-panel";
 import { approvePreparedDraft, editPreparedDraft, logActivity, rejectPreparedDraft, savePreparedDraft, setChannel, setTone, useEduFlow } from "@/lib/store";
+import { draftTextAttributes } from "@/lib/draft-direction";
 import { givenName, tx, fill } from "@/lib/text";
 import { TEACHER, type Audience, type Channel, type DraftSource, type TeacherDraft, type Tone } from "@/lib/types";
 import { CopyButton, buttonClass, inputClass } from "@/components/ui";
@@ -114,6 +115,7 @@ export function Inbox() {
       channel: record.channel,
       text: presented.text,
       subject: presented.subject,
+      locale,
       source: outcome.source,
       fallback: outcome.fallback,
       prepareMs: performance.now() - started,
@@ -332,9 +334,10 @@ export function Inbox() {
                         </label>
                         <textarea
                           id={`draft-${draft.id}`}
-                          className={`${inputClass} mt-1.5 min-h-40`}
+                          className={`${inputClass} mt-1.5 min-h-40 whitespace-pre-wrap`}
                           value={draft.text}
                           onChange={(event) => editPreparedDraft(draft.id, event.target.value)}
+                          {...draftTextAttributes(draft.locale, draft.text)}
                         />
                         {draft.blockReason ? (
                           <p className="mt-3 text-sm leading-6 text-rose-900" role="alert">
@@ -380,7 +383,9 @@ export function Inbox() {
                           <StatusBadge label={t("statusRejected")} tone="rejected" />
                           <SourceBadge source={draft.source} label={sourceLabel(draft.source, t)} />
                         </div>
-                        <p className="mt-3 whitespace-pre-wrap text-sm leading-7">{draft.text}</p>
+                        <p className="mt-3 whitespace-pre-wrap text-sm leading-7" {...draftTextAttributes(draft.locale, draft.text)}>
+                          {draft.text}
+                        </p>
                         <button type="button" className={`${buttonClass.secondary} mt-3`} disabled={busy !== null} onClick={() => void prepare(item, draft.audience)}>
                           {t("regenerateDraft")}
                         </button>
@@ -399,10 +404,12 @@ export function Inbox() {
                     </div>
                     {data.channel === "email" ? (
                       <p className="mt-2 text-sm font-medium">
-                        {t("subjectLabel")}: {approval.subject}
+                        {t("subjectLabel")}: <span {...draftTextAttributes(approval.locale, approval.subject)}>{approval.subject}</span>
                       </p>
                     ) : null}
-                    <p className="mt-3 whitespace-pre-wrap text-sm leading-7">{approval.text}</p>
+                    <p className="mt-3 whitespace-pre-wrap text-sm leading-7" {...draftTextAttributes(approval.locale, approval.text)}>
+                      {approval.text}
+                    </p>
                     <div className="mt-3 flex flex-wrap items-center gap-2">
                       <CopyButton
                         text={approval.text}

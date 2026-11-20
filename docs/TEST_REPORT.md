@@ -106,5 +106,5 @@ Not clicked in this pass: Reject draft, Prepare a new draft, Copy, the offline b
 - The claims guard in `lib/claims.ts` matches phrases, percentages, fractions, letter grades, and phone-like numbers. A paraphrase that avoids those patterns can be approved. That is not a full reading of the sentence.
 - Automated tests do not call the live OpenAI API. The build set `OPENAI_API_KEY` only in GitHub Actions as an empty string, on the earlier run linked above.
 - There is no teacher interview and no user test. Passing these 17 tests is not validation with a teacher.
-- Class counts, risk scores, and the on-time figures on screen come from the fictional seed. The weekly story points 38, 46, and 52 are not shown and are not a result.
+- Class counts, the experimental risk indicator, and the on-time figures on screen come from the fictional simulated seed. The score is not a real assessment. The weekly story points 38, 46, and 52 are not shown and are not a result.
 - Nothing was deployed. There is no hosted URL to test.

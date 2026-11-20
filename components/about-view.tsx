@@ -16,7 +16,7 @@ const copy = {
     access: "وصول الحكام",
     builtItems: [
       "مهمة واحدة من البداية إلى النتيجة: رصد المتأخر، قرار من يُراسَل، مسودة، ثم اعتماد.",
-      "درجة مخاطر من نمط التسليم عبر الواجبات، مع استثناء من عاد إلى الموعد.",
+      "مؤشر مخاطر تجريبي محسوب من نمط التسليم في بيانات خيالية، مع استثناء من عاد إلى الموعد. ليس تقييماً حقيقياً.",
       "نبرة رسمية أو ودّية، ونص واتساب أو بريد أو رسالة قصيرة.",
       "توقيت آسيا/دبي وآسيا/الرياض في حكم الاستحقاق.",
       "رفض الطلب الفارغ أو الخارج عن المهمة، ورفض مسودة ولي الأمر إذا غاب اسمه.",
@@ -69,7 +69,7 @@ const copy = {
     access: "Judge access",
     builtItems: [
       "One task from trigger to result: find who is late, decide who is contacted, draft, then wait for approval.",
-      "A risk score from the pattern across assignments, skipping a student who is back on time.",
+      "An experimental risk indicator from the pattern across fictional assignments, skipping a student who is back on time. It is not a real assessment.",
       "Formal or friendly tone, and WhatsApp, email, or SMS text.",
       "Asia/Dubai and Asia/Riyadh when judging a due date.",
       "Refusal of an empty or out-of-scope request, and of a parent draft when the parent name is missing.",

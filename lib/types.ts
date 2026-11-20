@@ -71,6 +71,7 @@ export type TeacherDraft = {
   channel: Channel;
   text: string;
   subject: string;
+  locale?: Locale;
   source: DraftSource;
   fallback: DraftFallback;
   status: TeacherDraftStatus;
@@ -99,6 +100,7 @@ export type Approval = {
   audience: Audience;
   text: string;
   subject: string;
+  locale?: Locale;
   source?: "openai" | "template" | "local";
   approvedAt: string;
 };

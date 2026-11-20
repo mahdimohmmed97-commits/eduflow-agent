@@ -1,5 +1,10 @@
 # Changelog
 
+## Draft direction and risk label
+
+- A draft’s text, editor, and approved view use the draft’s own language for `lang`, `dir`, alignment, and `unicode-bidi: plaintext`. An Arabic draft stays right-aligned inside an English page, and an English draft stays left-aligned inside an Arabic page.
+- Every visible risk score and level says it is an experimental indicator calculated from fictional simulated data, not a real assessment.
+
 ## Pre-deployment review
 
 - `docs/DEPLOYMENT_VERCEL.md` describes a possible Vercel demo of `cursor/eduflow-agent-prototype-a5df` only. Nothing was deployed. No API key is required.

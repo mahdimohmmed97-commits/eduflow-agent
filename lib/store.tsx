@@ -228,6 +228,7 @@ export function recordApproval(input: {
   audience: Audience;
   text: string;
   subject: string;
+  locale?: Locale;
   source?: "openai" | "template" | "local";
   actor: "teacher";
   textAr: string;
@@ -266,6 +267,7 @@ export function recordApproval(input: {
       audience: input.audience,
       text: decision.draft.text,
       subject: input.subject,
+      locale: input.locale,
       source: input.source,
       approvedAt: new Date().toISOString(),
     });
@@ -282,6 +284,7 @@ export function savePreparedDraft(input: {
   channel: Channel;
   text: string;
   subject: string;
+  locale: Locale;
   source: DraftSource;
   fallback: DraftFallback;
   prepareMs: number;
@@ -306,6 +309,7 @@ export function savePreparedDraft(input: {
       savedId = existing.id;
       existing.text = input.text;
       existing.subject = input.subject;
+      existing.locale = input.locale;
       existing.source = input.source;
       existing.fallback = input.fallback;
       existing.prepareMs += prepareMs;
@@ -322,6 +326,7 @@ export function savePreparedDraft(input: {
         channel: input.channel,
         text: input.text,
         subject: input.subject,
+        locale: input.locale,
         source: input.source,
         fallback: input.fallback,
         status: "pending_review",
@@ -424,6 +429,7 @@ export function approvePreparedDraft(
       audience: item.audience,
       text: decision.draft.text,
       subject: item.subject,
+      locale: item.locale,
       source: item.source,
       approvedAt: new Date().toISOString(),
     });

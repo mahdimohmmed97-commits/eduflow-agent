@@ -45,7 +45,7 @@ flowchart TD
 | --- | --- |
 | `lib/seed.ts` | The only class record. Fictional schools, students, parents, and assignments. |
 | `lib/store.tsx` | Loads and saves that record in the browser. Reset to demo scenario restores the seed. |
-| `lib/risk.ts` | Scores each student from past-due rows only. A student who is back on time is not queued for a message. |
+| `lib/risk.ts` | Calculates an experimental indicator from past-due fictional rows only. It is not a real assessment. A student who is back on time is not queued for a message. |
 | `lib/decide.ts` | Turns that score into the visible goal, steps, data, decision, action, and result. |
 | `lib/client-agent.ts` | Calls `POST /api/agent` and, on failure, shows the local template. |
 | `lib/agent.ts` | Checks the request, calls OpenAI only when a server key exists, and otherwise fills the template. Model text is kept only when it stays on the supplied names and figures. |

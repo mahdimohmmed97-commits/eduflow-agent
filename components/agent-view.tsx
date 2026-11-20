@@ -17,6 +17,7 @@ import type { MessageKey } from "@/lib/i18n";
 import { formatDate, isPastDue, zoneOf } from "@/lib/dates";
 import { logActivity, useEduFlow } from "@/lib/store";
 import { classOnTimeRate, listFollowUps, resolvedStatus, tally } from "@/lib/stats";
+import { draftTextAttributes } from "@/lib/draft-direction";
 import { givenName, tx } from "@/lib/text";
 import { TEACHER, type DemoData, type Locale } from "@/lib/types";
 
@@ -270,11 +271,11 @@ export function AgentView() {
                   const name = tx(draftLocale, student.nameAr, student.nameEn);
                   const parent = tx(draftLocale, student.parentNameAr, student.parentNameEn);
                   return (
-                    <article key={draft.studentId} className="rounded-3xl border border-line bg-paper p-4 shadow-sm sm:p-5" lang={draftLocale} dir={draftLocale === "ar" ? "rtl" : "ltr"}>
+                    <article key={draft.studentId} className="rounded-3xl border border-line bg-paper p-4 shadow-sm sm:p-5">
                       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
                         <div>
                           <p className="text-xs font-semibold uppercase tracking-wide text-gold-2">{t("draftOnlyShort")}</p>
-                          <h3 className="text-lg font-semibold">{name}</h3>
+                          <h3 className="text-lg font-semibold" {...draftTextAttributes(draftLocale, name)}>{name}</h3>
                         </div>
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-950 ring-1 ring-amber-200">
@@ -292,6 +293,7 @@ export function AgentView() {
                         <MessageCard
                           title={t("toStudent")}
                           who={name}
+                          locale={draftLocale}
                           text={draft.studentMessage}
                           copyLabel={t("copyStudent")}
                           copiedLabel={t("copied")}
@@ -301,6 +303,7 @@ export function AgentView() {
                         <MessageCard
                           title={t("toParent")}
                           who={parent}
+                          locale={draftLocale}
                           phone={student.parentPhone}
                           phoneHint={t("phoneHint")}
                           text={draft.parentMessage}
@@ -348,7 +351,7 @@ export function AgentView() {
               </div>
             ) : (
               <div className="space-y-4">
-                <article className="rounded-3xl border border-line bg-paper p-5 shadow-sm" lang={draftLocale} dir={draftLocale === "ar" ? "rtl" : "ltr"}>
+                <article className="rounded-3xl border border-line bg-paper p-5 shadow-sm">
                   <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
                     <div>
                       <h2 className="text-lg font-semibold">{t("summaryReady")}</h2>
@@ -357,7 +360,7 @@ export function AgentView() {
                     </div>
                     <CopyButton text={visibleSummary.text} label={t("copy")} copiedLabel={t("copied")} />
                   </div>
-                  <p className="whitespace-pre-wrap text-sm leading-7 text-ink">{visibleSummary.text}</p>
+                  <p className="whitespace-pre-wrap text-sm leading-7 text-ink" {...draftTextAttributes(draftLocale, visibleSummary.text)}>{visibleSummary.text}</p>
                 </article>
                 <article className="rounded-3xl border border-line bg-paper p-5 shadow-sm">
                   <h2 className="text-lg font-semibold">{t("flagged")}</h2>
@@ -394,6 +397,7 @@ export function AgentView() {
 function MessageCard({
   title,
   who,
+  locale,
   text,
   copyLabel,
   copiedLabel,
@@ -405,6 +409,7 @@ function MessageCard({
 }: {
   title: string;
   who: string;
+  locale: Locale;
   text: string;
   copyLabel: string;
   copiedLabel: string;
@@ -414,10 +419,11 @@ function MessageCard({
   onTextChange?: (value: string) => void;
   warm?: boolean;
 }) {
+  const textProps = draftTextAttributes(locale, text);
   return (
     <div className={`flex h-full flex-col rounded-2xl border p-4 ${warm ? "border-amber-200 bg-[#fbf7ef]" : "border-teal/20 bg-[#f3faf9]"}`}>
       <p className="text-xs font-semibold text-muted">{title}</p>
-      <p className="mt-1 font-semibold">{who}</p>
+      <p className="mt-1 font-semibold" {...draftTextAttributes(locale, who)}>{who}</p>
       {phone ? (
         <p className="mt-1 text-xs text-muted">
           <span dir="ltr">{phone}</span>
@@ -427,12 +433,13 @@ function MessageCard({
       {onTextChange ? (
         <textarea
           aria-label={editorLabel ?? title}
-          className={`${inputClass} mt-3 min-h-48 flex-1`}
+          className={`${inputClass} mt-3 min-h-48 flex-1 whitespace-pre-wrap`}
           value={text}
           onChange={(event) => onTextChange(event.target.value)}
+          {...textProps}
         />
       ) : (
-        <p className="mt-3 flex-1 whitespace-pre-wrap text-sm leading-7">{text}</p>
+        <p className="mt-3 flex-1 whitespace-pre-wrap text-sm leading-7" {...textProps}>{text}</p>
       )}
       <div className="mt-4">
         <CopyButton text={text} label={copyLabel} copiedLabel={copiedLabel} />
