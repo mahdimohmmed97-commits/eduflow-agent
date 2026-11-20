@@ -1,6 +1,8 @@
 # Demo scenario
 
-This is a fixed, fictional walkthrough for a 2-minute demo video. Every person in it is invented. Nothing in the product sends a message.
+This is a fixed, fictional walkthrough for the demo video. Every person in it is invented. Nothing in the product sends a message. The video itself is not in this repository. Mahdi records it.
+
+The Submission Guide PDF, read on 20 November 2026, limits that recording to 2 minutes maximum. A longer optional demo is allowed as a separate extra, not as a replacement for the 2-minute cut. The recording has to show the real working agent: the trigger, the actions, and the outcome. Sample data must be labeled on screen. Any sped-up wait must be labeled. "Every number comes from your own work." The participant is visible in a corner webcam and explains the path out loud, in English. The file is embedded on slide 4 of the deck. This page is only the script.
 
 The story is stored in `lib/seed.ts`. Due dates are offsets from today in Asia/Dubai (the math class) or Asia/Riyadh (the English class), so the same students stay urgent on any calendar day. Header button **Reset to demo scenario** / **إعادة سيناريو العرض** writes that seed back into this browser and clears drafts. The storage key is `eduflow-agent-v2`.
 
@@ -38,9 +40,9 @@ For the recording, use Sultan Al Mutairi (`stu-12`):
 
 The other urgent rows are Maryam Al Otaibi and Ahmed Al Zahrani on Linear Equations at Al Noor International School in Dubai, and Lina Khan on the same essay. Do not add a real student.
 
-## Two-minute recording
+## Recording script
 
-Start from Reset to demo scenario, with no API key, so the draft source is the local template. Switch the interface to English if the recording is for the English submission. Times are a guide.
+Start from Reset to demo scenario, with no API key, so the draft source is the local template. Switch the interface to English before recording. The official demo is in English. Say on camera that the students are fictional and that sending is simulated. Times below are a guide for a cut of at most 2 minutes. Do not present the risk scores or the on-time counts as a school result. They are computed from the fictional seed.
 
 | Time | Do this | What should be on screen |
 | --- | --- | --- |

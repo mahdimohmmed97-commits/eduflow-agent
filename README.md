@@ -11,7 +11,9 @@ The app opens on a short introduction, then a seeded teacher workspace. There is
 
 ### What it is
 
-EduFlow Agent is a demo for Dubai’s Create AI Agents Championship. A coordinator sees who is late across a Dubai school and a Riyadh center, and the agent prepares the next message for approval.
+EduFlow Agent is a demo for Dubai’s Create AI Agents Championship. A coordinator sees who is late across a fictional Dubai school and a fictional Riyadh center, and the agent prepares the next message for approval.
+
+The official submission rules read on 20 November 2026 are inventoried in `SUBMISSION_READINESS.md`. Running this repo locally is a developer path. It is not the judge test link. The deadline stated there is 4 January 2027 at 11:59 AM Dubai time (GST).
 
 If `OPENAI_API_KEY` is set, drafts are written with OpenAI. If it is missing, or the call fails, the same screens fill in with realistic templates so the demo still works. The key stays on the server.
 

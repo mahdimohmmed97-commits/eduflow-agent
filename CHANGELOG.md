@@ -1,5 +1,10 @@
 # Changelog
 
+## Official guide pass — 20 November 2026
+
+- `SUBMISSION_READINESS.md` now follows the Submit page, the Submission Guide PDF, and the FAQ read that day. Identify, Build, and Validate are not the official criteria. The deadline in that note is 4 January 2027 at 11:59 AM Dubai time (GST).
+- The local clone path is documented as a developer path. It does not meet the rule that judges evaluate without installing software. No host was created.
+
 ## Phase 3 — submission readiness notes
 
 - The README no longer describes an estimated time saved, a story improvement rate, or a model-cost guess. The weekly seed points 38, 46, and 52 stay in `lib/seed.ts` as fictional story data. They are not shown as an outcome.

@@ -1,6 +1,10 @@
 # Judge demo guide
 
-This repository is not deployed. No hosting account was created for it. There is no public demo URL. A judge can run a copy on their own computer. A hosted copy is described only as a possible later step. This guide does not create one.
+This repository is not deployed. No hosting account was created for it. There is no public demo URL.
+
+The official guide, read on 20 November 2026, says judges must evaluate without technical setup and without installing software or running code. It also asks for an accessible test link that stays active until the end of the Championship. The steps below install Node.js and run the app, so they do **not** meet that rule. They are a developer path for Mahdi and for anyone reviewing the code.
+
+The recommendation is Option A: a hosted web link that still uses the fictional seed. That host is not created here. What it would require, and why Option C is only a fallback, is in `SUBMISSION_READINESS.md` section (d).
 
 ## Run a local copy
 
@@ -40,16 +44,16 @@ npm run build
 
 `docs/TEST_REPORT.md` records the last run that was actually executed for this branch, including what the tests do not cover.
 
-## If a hosted copy exists later
+## What a future hosted copy would still be
 
-This branch does not deploy the app. If the owner later hosts it, a judge would open that URL in a browser. The same limits would still apply:
+This branch does not deploy the app and does not choose a host. If Mahdi later approves a host and pays for it, a judge would open that URL in a browser and would not clone the repo. The same limits would still apply:
 
-- No login.
-- Fictional seed data, with Reset to demo scenario to restore it.
+- No login. The teacher name on the page is not identity proof.
+- Fictional seed data only. **Reset to demo scenario** restores it.
+- The banner says class records are simulated and that WhatsApp, email, and SMS sending is simulated and never leaves the browser.
 - Drafts saved in that browser only (`localStorage`, key `eduflow-agent-v2`).
 - No database.
-- No WhatsApp, email, or SMS sending.
-- An optional server-side model key. Without it, the local template is used.
+- An optional server-side model key. Without it, the local template is used. A live cost per task has not been measured.
 - Approval still does not send.
 
-Until that host exists, use the local commands above. Do not treat a Vercel, GitHub Pages, or other URL as part of this submission.
+Until that URL exists, do not treat any address as the Championship test link. The local commands above are not a substitute for it.

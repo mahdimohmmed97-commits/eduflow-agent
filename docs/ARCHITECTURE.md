@@ -2,6 +2,10 @@
 
 EduFlow Agent is a Next.js app. It drafts homework follow-ups for a teacher to review. It does not send them.
 
+The Submission Guide PDF, read on 20 November 2026, defines an agent as one that pursues a goal by selecting steps, using relevant information or tools, and carrying out actions. The named steps are: Receive a goal, Determine steps, Use tools or data, Take action, Return a result. In this app those steps are the inbox trace from `lib/decide.ts`. The action that is actually carried out is writing a draft and stopping for a person. WhatsApp, email, and SMS are simulated and labeled. They are not carried out.
+
+The 13-field Agent Card filled from these facts is in `SUBMISSION_READINESS.md`. Cost per task is not measured.
+
 ```mermaid
 flowchart TD
   teacher[Teacher in the browser]

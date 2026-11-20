@@ -2,7 +2,26 @@
 
 This report records commands that were actually run. It does not borrow numbers from an earlier day.
 
-## Local run on 20 November 2026
+These tests are engineering checks. They are not evidence of business value, demand, teacher benefit, or user validation. No teacher has used the app.
+
+## Guide-alignment tree, local run on 20 November 2026
+
+This run is the one on the tree that updates the docs to the official guide. No test file changed. `npm run lint`, `npm run typecheck`, and `npm run build` (Next.js 16.4.6) exited 0. `npm test` printed:
+
+```
+# tests 17
+# suites 0
+# pass 17
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 4220.219759
+```
+
+The 17 names are the same ones listed in the earlier section below. GitHub Actions for the commit that contains this section is recorded after that workflow finishes. It is not claimed here yet.
+
+## Earlier local run on 20 November 2026
 
 Working tree: branch `cursor/submission-readiness-f7dd`, after the submission-readiness edits and before that commit was pushed. Node.js v22.23.4.
 
