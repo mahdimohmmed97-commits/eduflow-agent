@@ -1,3 +1,4 @@
+import { reviewTeacherEdit, type EditBlockReason } from "@/lib/claims";
 import type { Audience } from "@/lib/types";
 
 export type ApprovalActor = "teacher" | "agent" | "system";
@@ -21,9 +22,16 @@ export type ApprovedDraft = {
   sent: false;
 };
 
+export type ApprovalContext = {
+  allowedParts: string[];
+  otherNames: string[];
+};
+
+export type ApprovalError = "teacher_approval_required" | "empty_draft" | Exclude<EditBlockReason, "empty">;
+
 export type ApprovalDecision =
-  | { ok: true; draft: ApprovedDraft }
-  | { ok: false; error: "teacher_approval_required" | "empty_draft"; sent: false };
+  | { ok: true; draft: ApprovedDraft; sent: false }
+  | { ok: false; error: ApprovalError; sent: false };
 
 export function createPendingDraft(input: {
   studentId: string;
@@ -41,11 +49,13 @@ export function createPendingDraft(input: {
   };
 }
 
-export function approveDraft(draft: PendingDraft, actor: ApprovalActor): ApprovalDecision {
+export function approveDraft(draft: PendingDraft, actor: ApprovalActor, context: ApprovalContext): ApprovalDecision {
   if (actor !== "teacher") return { ok: false, error: "teacher_approval_required", sent: false };
-  if (!draft.text.trim()) return { ok: false, error: "empty_draft", sent: false };
+  const review = reviewTeacherEdit(draft.text, context.allowedParts, context.otherNames);
+  if (!review.ok) return { ok: false, error: review.reason === "empty" ? "empty_draft" : review.reason, sent: false };
   return {
     ok: true,
+    sent: false,
     draft: {
       studentId: draft.studentId,
       assignmentId: draft.assignmentId,

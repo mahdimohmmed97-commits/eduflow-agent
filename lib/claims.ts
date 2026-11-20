@@ -22,6 +22,20 @@ export function summaryTextIsGrounded(text: string, allowedParts: string[]): boo
   return sharedFactsAreGrounded(text, allowedParts);
 }
 
+export type EditBlockReason = "empty" | "unsupported_claim" | "unknown_fact" | "other_student";
+
+export function reviewTeacherEdit(
+  text: string,
+  allowedParts: string[],
+  otherNames: string[],
+): { ok: true } | { ok: false; reason: EditBlockReason } {
+  if (!text.trim()) return { ok: false, reason: "empty" };
+  if (hasUnsafeClaim(text)) return { ok: false, reason: "unsupported_claim" };
+  if (mentionsAny(text, otherNames)) return { ok: false, reason: "other_student" };
+  if (!sharedFactsAreGrounded(text, allowedParts)) return { ok: false, reason: "unknown_fact" };
+  return { ok: true };
+}
+
 function sharedFactsAreGrounded(text: string, allowedParts: string[]): boolean {
   if (hasUnsafeClaim(text)) return false;
   const allowed = allowedParts.join("\n");

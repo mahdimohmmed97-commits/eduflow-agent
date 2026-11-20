@@ -114,7 +114,7 @@ export function ClassesView() {
     <div>
       <PageIntro
         title={t("classesTitle")}
-        body={t("classesBody")}
+        body={`${t("classesBody")} ${t("demoCountsLabel")}`}
         action={
           <div className="flex flex-wrap gap-2">
             <Button onClick={() => { setError(""); setOpen("class"); }}>

@@ -12,7 +12,7 @@ import {
   type ReminderRequest,
   type SummaryRequest,
 } from "@/lib/agent";
-import { runAgent, type ShownSource } from "@/lib/client-agent";
+import { runAgent, type ConnectionFallback, type ShownSource } from "@/lib/client-agent";
 import type { MessageKey } from "@/lib/i18n";
 import { formatDate, isPastDue, zoneOf } from "@/lib/dates";
 import { logActivity, useEduFlow } from "@/lib/store";
@@ -37,8 +37,8 @@ export function AgentView() {
   const [classChoice, setClassChoice] = useState("all");
   const [picked, setPicked] = useState<{ assignmentId: string; ids: string[] } | null>(null);
   const [loading, setLoading] = useState(false);
-  const [reminders, setReminders] = useState<{ key: string; source: ShownSource; drafts: ReminderDraft[] } | null>(null);
-  const [summary, setSummary] = useState<{ key: string; source: ShownSource; text: string } | null>(null);
+  const [reminders, setReminders] = useState<{ key: string; source: ShownSource; fallback: ConnectionFallback | null; drafts: ReminderDraft[] } | null>(null);
+  const [summary, setSummary] = useState<{ key: string; source: ShownSource; fallback: ConnectionFallback | null; text: string } | null>(null);
 
   if (!data) return <ContentSkeleton />;
   const record = data;
@@ -93,7 +93,7 @@ export function AgentView() {
       return;
     }
     const drafts = outcome.result.kind === "reminders" ? outcome.result.drafts : [];
-    setReminders({ key: reminderKey, source: outcome.source, drafts });
+    setReminders({ key: reminderKey, source: outcome.source, fallback: outcome.fallback, drafts });
     logActivity(
       "plan",
       `صيغت مسودات تذكير لـ«${tx(locale, assignment.titleAr, assignment.titleEn)}». لم تُرسل.`,
@@ -111,7 +111,7 @@ export function AgentView() {
       return;
     }
     const text = outcome.result.kind === "summary" ? outcome.result.summary : "";
-    setSummary({ key: summaryKey, source: outcome.source, text });
+    setSummary({ key: summaryKey, source: outcome.source, fallback: outcome.fallback, text });
     logActivity("summary", "صيغ ملخص الأسبوع للمراجعة. لم يُرسل.", "Drafted the weekly summary for review. It was not sent.");
     setLoading(false);
   }
@@ -250,6 +250,7 @@ export function AgentView() {
                   <div>
                     <h2 className="text-lg font-semibold">{t("messagesReady")}</h2>
                     <p className="text-sm text-muted">{sourceCaption(visibleReminders.source, t)}</p>
+                    <FallbackLine fallback={visibleReminders.fallback} t={t} />
                   </div>
                   <CopyButton
                     text={visibleReminders.drafts
@@ -277,7 +278,10 @@ export function AgentView() {
                         </div>
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-950 ring-1 ring-amber-200">
-                            {t("draftMark")}
+                            {t("statusPending")}
+                          </span>
+                          <span className="rounded-full bg-teal/10 px-3 py-1 text-xs font-semibold text-teal">
+                            {visibleReminders.source === "openai" ? t("sourceBadgeAi") : visibleReminders.source === "local" ? t("sourceBadgeLocal") : t("sourceBadgeTemplate")}
                           </span>
                           <button type="button" className={buttonClass.secondary} onClick={() => rejectReminder(draft.studentId)}>
                             {t("rejectDraft")}
@@ -331,6 +335,7 @@ export function AgentView() {
             </select>
             <p className="mt-3 text-sm leading-6 text-muted">{t("summaryScope")}</p>
             <p className="mt-2 text-sm text-muted">{t("gradebookHint")}</p>
+            <p className="mt-2 text-sm text-muted">{t("demoRateLabel")}</p>
             <Button className="mt-4 w-full" onClick={() => void generateSummary()} disabled={loading || !summaryRequest}>
               {loading && tab === "summary" ? t("generating") : visibleSummary ? t("regenerate") : t("generateSummary")}
             </Button>
@@ -348,6 +353,7 @@ export function AgentView() {
                     <div>
                       <h2 className="text-lg font-semibold">{t("summaryReady")}</h2>
                       <p className="text-sm text-muted">{sourceCaption(visibleSummary.source, t)}</p>
+                      <FallbackLine fallback={visibleSummary.fallback} t={t} />
                     </div>
                     <CopyButton text={visibleSummary.text} label={t("copy")} copiedLabel={t("copied")} />
                   </div>
@@ -432,6 +438,16 @@ function MessageCard({
         <CopyButton text={text} label={copyLabel} copiedLabel={copiedLabel} />
       </div>
     </div>
+  );
+}
+
+function FallbackLine({ fallback, t }: { fallback: ConnectionFallback | null; t: Translator }) {
+  if (!fallback) return null;
+  const key = fallback === "timeout" ? "timeoutNotice" : fallback === "offline" ? "offlineNotice" : "serverNotice";
+  return (
+    <p className="mt-2 text-sm leading-6 text-ink" role="status">
+      {t(key)}
+    </p>
   );
 }
 

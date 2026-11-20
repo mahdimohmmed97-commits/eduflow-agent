@@ -1,5 +1,18 @@
 # Changelog
 
+## Phase 2 review
+
+- The home page and dashboard no longer show an estimated time saved, a story improvement rate, or a model-cost guess.
+- The measured preparation time says it is not time saved for the teacher. Counts from the fictional record are labeled as demo data.
+- Approving edited text, including through `/api/approve`, runs the claims check and still does not send.
+
+## Phase 2 — teacher experience and measured follow-up
+
+- The inbox shows the prepare, edit, and approve-or-reject steps, and each draft is marked pending review, approved, or rejected.
+- Model drafts, local templates, and templates shown after a timeout or a lost connection are labeled separately. Approval of edited text is refused when it adds a grade, a school policy, an unknown figure, or another student. Approval still does not send.
+- A panel counts students who have not submitted, drafts prepared, drafts approved, and the measured duration of prepare requests in this browser. It does not estimate time saved.
+- The approve button still passes the teacher role from the page. That is not a login.
+
 ## Review before merge
 
 - Student ids are identifiers. The parser trims whitespace and lowercases them, so `Stu-01` and `stu-01` are the same id. Names are not lowercased.

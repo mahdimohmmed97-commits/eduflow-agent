@@ -56,6 +56,30 @@ export type Submission = {
   note: string;
 };
 
+export type DraftSource = "openai" | "template" | "local";
+
+export type DraftFallback = "timeout" | "offline" | "server" | null;
+
+export type TeacherDraftStatus = "pending_review" | "approved" | "rejected";
+
+export type TeacherDraft = {
+  id: string;
+  studentId: string;
+  assignmentId: string;
+  audience: Audience;
+  tone: Tone;
+  channel: Channel;
+  text: string;
+  subject: string;
+  source: DraftSource;
+  fallback: DraftFallback;
+  status: TeacherDraftStatus;
+  prepareMs: number;
+  allowedParts: string[];
+  otherNames: string[];
+  blockReason: "empty" | "unsupported_claim" | "unknown_fact" | "other_student" | null;
+};
+
 export type ActivityKind = "plan" | "approved" | "copied" | "status" | "summary" | "test" | "refused";
 
 export type ActivityEntry = {
@@ -91,6 +115,8 @@ export type DemoData = {
   submissions: Submission[];
   activity: ActivityEntry[];
   approvals: Approval[];
+  drafts?: TeacherDraft[];
+  measuredPrepareMs?: number;
   tone: Tone;
   channel: Channel;
   trend: WeekPoint[];

@@ -1,8 +1,6 @@
 import { isPastDue, zoneOf } from "@/lib/dates";
 import type { Assignment, DemoData, SchoolClass, Student, SubmissionStatus } from "@/lib/types";
 
-export const MINUTES_PER_DRAFT = 6;
-
 export type Tally = {
   submitted: number;
   late: number;
@@ -22,6 +20,15 @@ export function resolvedStatus(data: DemoData, assignmentId: string, studentId: 
   if (rows.some((item) => item.status === "submitted")) return "submitted";
   if (rows.some((item) => item.status === "late")) return "late";
   return "not_submitted";
+}
+
+export function studentsNotSubmittedCount(data: DemoData): number {
+  const ids = new Set<string>();
+  for (const assignment of data.assignments) {
+    if (!isPastDue(assignment.dueDate, zoneOf(data.classes, assignment.classId))) continue;
+    for (const student of studentsWhoHaveNotSubmitted(data, assignment.id)) ids.add(student.id);
+  }
+  return ids.size;
 }
 
 export function studentsWhoHaveNotSubmitted(data: DemoData, assignmentId: string): Student[] {

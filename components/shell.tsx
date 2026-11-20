@@ -7,6 +7,7 @@ import { ClipboardIcon, HomeIcon, InfoIcon, SparkIcon, UsersIcon } from "@/compo
 import { Button, Modal, buttonClass } from "@/components/ui";
 import { ensureStored, resetDemo, setLocale, useEduFlow } from "@/lib/store";
 import { TEACHER } from "@/lib/types";
+import { pageDirection } from "@/lib/i18n";
 import { tx } from "@/lib/text";
 
 const links = [
@@ -24,7 +25,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     document.documentElement.lang = locale === "ar" ? "ar" : "en";
-    document.documentElement.dir = locale === "ar" ? "rtl" : "ltr";
+    document.documentElement.dir = pageDirection(locale);
     ensureStored();
   }, [locale]);
 
