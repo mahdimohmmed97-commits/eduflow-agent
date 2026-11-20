@@ -1,0 +1,150 @@
+"use client";
+
+import { PageIntro } from "@/components/ui";
+import { useEduFlow } from "@/lib/store";
+
+const copy = {
+  ar: {
+    title: "عن الوكيل وحدوده",
+    body: "ما يعمل اليوم، وما هو مخطط، وأين يتوقف الإنسان. لا نعرض وقتاً موفّراً ولا تكلفة مقدّرة.",
+    built: "يعمل الآن",
+    planned: "مخطط ولم يُبنَ",
+    limits: "حدود معروفة",
+    data: "البيانات",
+    cost: "تكلفة المهمة",
+    oversight: "أين يتدخل الإنسان",
+    access: "وصول الحكام",
+    builtItems: [
+      "مهمة واحدة من البداية إلى النتيجة: رصد المتأخر، قرار من يُراسَل، مسودة، ثم اعتماد.",
+      "مؤشر مخاطر تجريبي محسوب من نمط التسليم في بيانات خيالية، مع استثناء من عاد إلى الموعد. ليس تقييماً حقيقياً.",
+      "نبرة رسمية أو ودّية، ونص واتساب أو بريد أو رسالة قصيرة.",
+      "توقيت آسيا/دبي وآسيا/الرياض في حكم الاستحقاق.",
+      "رفض الطلب الفارغ أو الخارج عن المهمة، ورفض مسودة ولي الأمر إذا غاب اسمه.",
+      "فحص موثوقية داخل الصفحة، وسجل لما اعتُمد أو رُفض.",
+      "قالب محلي يعمل بلا مفتاح، ونموذج OpenAI اختياري على الخادم.",
+    ],
+    plannedItems: [
+      "إرسال حقيقي إلى واتساب أو بريد أو رسالة قصيرة.",
+      "ربط بسجل مدرسة حقيقي.",
+      "حسابات لأكثر من معلم، وصلاحيات.",
+      "رد ولي الأمر داخل المنتج.",
+      "قياس وقت المعلمة مع مستخدمين حقيقيين. لا نعرض رقم دقائق موفّرة.",
+    ],
+    limitItems: [
+      "لا يرسل أي رسالة، حتى بعد الاعتماد.",
+      "لا يخترع درجات ولا يتصل بولي الأمر.",
+      "العربية والإنجليزية فقط.",
+      "دبي والرياض اليوم كلاهما UTC+4، لذلك يطابق يومهما. الكود يطلب منطقة الصف صراحة حتى لا يعتمد على ساعة الجهاز.",
+      "إذا تعذّر النموذج، تُستخدم القوالب وتُعلَّم النتيجة بذلك.",
+    ],
+    dataItems: [
+      "الأسماء والهواتف في العرض خيالية.",
+      "تعديلاتك تبقى في localStorage على هذا المتصفح. زر الإعادة يمسحها.",
+      "لا قاعدة بيانات، ومفتاح النموذج لا يصل إلى المتصفح.",
+      "عند استخدام النموذج يُرسل إلى الخادم اسم الطالب وولي الأمر والمادة والحالة. رقم الهاتف لا يُرسل.",
+    ],
+    costItems: [
+      "بلا مفتاح نموذج: تكلفة الصياغة صفر. هذا مسار العرض الافتراضي.",
+      "لا فاتورة مقاسة لتكلفة النموذج، لذلك لا نعرض مبلغاً.",
+      "لا نعرض وقتاً موفّراً للمعلمة. المدة الظاهرة هي وقت التجهيز المقاس فقط.",
+      "نسبة التسليم في الموعد محسوبة من سجل العرض الخيالي، وليست نتيجة مدرسة.",
+    ],
+    oversightItems: [
+      "كل مسودة تنتظر زر الاعتماد.",
+      "النسخ لا يرسل.",
+      "المعلمة تغيّر الحالة والنبرة والقناة واللغة.",
+      "الطلب الغامض أو الخارج عن المهمة يتوقف ويُسجَّل.",
+    ],
+    accessBody: "لا تسجيل دخول ولا نسخة مستضافة من هذا المستودع. شغّل التطبيق محلياً، وزر إعادة سيناريو العرض يعيد القصة الخيالية إن تغيّر شيء.",
+  },
+  en: {
+    title: "About the agent and its limits",
+    body: "What works today, what is only planned, and where a person steps in. No time-saved figure and no estimated cost are shown.",
+    built: "Working now",
+    planned: "Planned, not built",
+    limits: "Known limits",
+    data: "Data",
+    cost: "Cost per task",
+    oversight: "Where a person steps in",
+    access: "Judge access",
+    builtItems: [
+      "One task from trigger to result: find who is late, decide who is contacted, draft, then wait for approval.",
+      "An experimental risk indicator from the pattern across fictional assignments, skipping a student who is back on time. It is not a real assessment.",
+      "Formal or friendly tone, and WhatsApp, email, or SMS text.",
+      "Asia/Dubai and Asia/Riyadh when judging a due date.",
+      "Refusal of an empty or out-of-scope request, and of a parent draft when the parent name is missing.",
+      "An in-page reliability check, and a log of approvals and refusals.",
+      "A local template with no key, and optional OpenAI on the server.",
+    ],
+    plannedItems: [
+      "Real delivery to WhatsApp, email, or SMS.",
+      "A connection to a real school record.",
+      "Accounts for more than one teacher, and permissions.",
+      "A parent reply inside the product.",
+      "A timed study with real teachers. No minutes-saved figure is shown.",
+    ],
+    limitItems: [
+      "It sends no message, even after approval.",
+      "It does not invent marks or call a parent.",
+      "Arabic and English only.",
+      "Dubai and Riyadh are both UTC+4 today, so the calendar day matches. The code still asks for the class zone instead of the device clock.",
+      "If the model fails, templates are used and the result says so.",
+    ],
+    dataItems: [
+      "Names and phone numbers in the demo are fictional.",
+      "Your edits stay in localStorage on this browser. Reset clears them.",
+      "There is no database, and the model key never reaches the browser.",
+      "When the model is used, the server sends the student name, parent name, subject, and status. The phone number is not sent.",
+    ],
+    costItems: [
+      "With no model key, drafting costs nothing. That is the default demo path.",
+      "There is no measured model bill, so no amount is shown.",
+      "No teacher time-saved figure is shown. The duration on screen is measured preparation time only.",
+      "The on-time rate is calculated from the fictional demo record. It is not a school result.",
+    ],
+    oversightItems: [
+      "Every draft waits for the approve button.",
+      "Copying does not send.",
+      "The teacher changes status, tone, channel, and language.",
+      "An unclear or out-of-scope request stops and is logged.",
+    ],
+    accessBody: "No login, and this repository has no hosted copy. Run the app locally. Reset to demo scenario restores the fictional story if anything changed.",
+  },
+} as const;
+
+export function AboutView() {
+  const { locale } = useEduFlow();
+  const text = copy[locale];
+  const sections = [
+    [text.built, text.builtItems],
+    [text.planned, text.plannedItems],
+    [text.limits, text.limitItems],
+    [text.data, text.dataItems],
+    [text.cost, text.costItems],
+    [text.oversight, text.oversightItems],
+  ] as const;
+
+  return (
+    <div>
+      <PageIntro eyebrow="EduFlow Agent" title={text.title} body={text.body} />
+      <div className="grid gap-4 lg:grid-cols-2">
+        {sections.map(([title, items]) => (
+          <section key={title} className="rounded-3xl border border-line bg-paper p-5 shadow-sm">
+            <h2 className="text-lg font-semibold">{title}</h2>
+            <ul className="mt-3 space-y-2 text-sm leading-6 text-ink">
+              {items.map((item) => (
+                <li key={item} className="rounded-2xl bg-sand px-3 py-2">
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))}
+      </div>
+      <section className="mt-4 rounded-3xl border border-line bg-paper p-5 shadow-sm">
+        <h2 className="text-lg font-semibold">{text.access}</h2>
+        <p className="mt-2 text-sm leading-7 text-muted">{text.accessBody}</p>
+      </section>
+    </div>
+  );
+}
