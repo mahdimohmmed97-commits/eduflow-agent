@@ -1,78 +1,177 @@
-# Vercel demo hosting
+# Vercel demo, written for a first deploy
 
-This file is a checklist for a later demo. It does not deploy anything. The owner has not approved hosting. Do not run `vercel deploy`, do not create a project, and do not add an API key while following this page as a review.
+This page is a checklist. It does not deploy anything. The owner approved a Pro budget of about $20 per month in principle, and wants a link that can stay up until 6 May 2027. He has not approved starting the paid subscription or pressing Deploy. He will create the Vercel account himself and connect only `https://github.com/mahdimohmmed97-commits/eduflow-agent`.
 
-The app to host is the prototype branch `cursor/eduflow-agent-prototype-a5df`. `main` stays the original README commit `c3f21387f75d6e61b9a27833c46fc7a765b15763`. Choosing that prototype branch in Vercel does not merge it into `main`.
+Do not run `vercel`, `vercel link`, or `vercel deploy`. Do not change the GitHub default branch. `main` stays `c3f21387f75d6e61b9a27833c46fc7a765b15763`. The app to host is `cursor/eduflow-agent-prototype-a5df`.
 
-## What a hosted copy would be
+`vercel.json` is not in this repository. Vercel detects Next.js. A file that turned deployments off would also block the branch we want, so it is not added.
 
-- Next.js app, no database, no login.
-- Class records are the fictional seed in `lib/seed.ts`.
-- Leave every environment variable empty. With no `OPENAI_API_KEY`, `POST /api/agent` returns `source: "template"` and the draft badge says **Local template draft** / **مسودة من القالب المحلي**.
-- `POST /api/approve` never sends. `deliverApprovedDraft` returns `sending_disabled`.
-- The only outbound call in the code is `https://api.openai.com/v1/chat/completions`, and only when `OPENAI_API_KEY` is set. Do not set it for this demo.
+## What the hosted copy is
 
-`vercel.json` is not required. Vercel detects Next.js from `package.json`.
+- Next.js, no database, no login, fictional seed in `lib/seed.ts`.
+- Add no environment variables for the demo. `AI_PROVIDER` stays unset or `none`. With no key, `POST /api/agent` returns `source: "template"` and the badge says **Local template draft** / **مسودة من القالب المحلي**.
+- `POST /api/approve` never sends.
+- A model is called only later, and only if the owner sets `AI_PROVIDER` to `openai` or `anthropic` and adds that provider’s key. Do not do that for this demo.
 
-## Exact steps, when the owner approves
+## 1. Deploy the prototype branch, not main
 
-1. Sign in to Vercel with the account that will pay if the plan is not Hobby. This repository does not create that account.
-2. Import `https://github.com/mahdimohmmed97-commits/eduflow-agent`. Framework preset: Next.js.
-3. Production Branch: `cursor/eduflow-agent-prototype-a5df`. Do not use `main`. A Preview deployment of that same branch is the other way to get a URL without making it the production branch. Either way, deploy only that branch.
-4. Environment variables: add none. Do not paste `OPENAI_API_KEY` or `OPENAI_MODEL`.
-5. Install command: `npm ci` (a lockfile is committed).
-6. Build command: `npm run build` (`next build`). Leave the start command empty. Vercel serves the Next.js build itself. `npm start` / `next start` is only for a local check of the production build.
-7. Node.js version: 22.x, the version in `.github/workflows/ci.yml` (`node-version: 22`). The README also allows Node 20 for local development. Use 22 on Vercel so the host matches CI.
-8. Deploy only after the owner says so. Then open the URL, press **Reset to demo scenario**, and confirm the draft badge says the local template.
+Read on 20 November 2026.
 
-Security headers are set in `next.config.ts` for every path: `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `X-Frame-Options: SAMEORIGIN`, and `Permissions-Policy` with camera, microphone, and geolocation disabled. There is no content-security-policy, because the locale bootstrap is an inline script and a strict policy would need a tested exception.
+https://vercel.com/docs/git says a new project’s production branch is chosen in this order:
 
-## Recommended project settings
+> The `main` branch.
+> If not present, the `master` branch.
+> If not present, the Git repository's default branch.
 
-From the Hobby plan page read on 20 November 2026 (https://vercel.com/docs/plans/hobby):
+The same page says that after you pick the repository you configure the project, and then:
 
-> Deployment Protection: Vercel Authentication for preview and production deployments, Deployment Protection Exceptions, and Shareable Links.
+> When your settings are correct, you can select the Deploy button to initiate a deployment.
 
-> Spend Management: N/A on Hobby. Configurable on Pro.
+The import screen described there sets the name, framework, root, build settings, and environment variables. It does not list a production-branch field. So the Deploy button on import builds `main`. That is a real deploy. Do not press it until the owner accepts that first build.
 
-> DDoS Mitigation: On by default.
+Changing the production branch is documented after the project exists, on https://vercel.com/docs/git :
 
-Prefer a Shareable Link for judges over turning Deployment Protection off for the whole project. The two POST routes have no login. Anyone who can open the site can call them. A shareable link still exposes those routes to whoever has the link. Turning protection off makes the same routes public.
+> On the Environments page in the Project Settings, you can change your production branch:
+> Click on the Production environment and go to Branch Tracking
+> Change the name of the branch and click Save
+>
+> Whenever a new commit is then pushed to the branch you configured here, a production deployment will be created for you.
 
-Do not add an OpenAI key. A public link plus a key would let strangers spend the key. With the key unset, those calls cannot create a model bill.
+Saving that setting does not, in the text above, deploy by itself. The next push to `cursor/eduflow-agent-prototype-a5df` does. Flag that push.
 
-There is no application-level rate limit. An in-memory limit would not cover every serverless instance, so it is not in the code. Both routes cap the body at 64,000 characters (`payload_too_large` / HTTP 413). Hobby includes DDoS mitigation by default and up to 3 WAF custom rules. That is the place for a request cap if the link is shared. Hobby does not include spend management. If the account is upgraded to Pro, set a spend cap before sharing the link. The prices below are the only ones quoted from Vercel for that upgrade.
+A preview of one branch, without making it production, is also documented on that page under “Creating a deployment from a Git reference”:
 
-## Plan and cost
+> Branch-Based Deployments: Provide the full name or URL of a branch when you want to build the most recent changes from that specific branch
+> Select Create Deployment. Vercel will build and deploy your commit or branch as usual
 
-Fetched on 20 November 2026.
+That button is a deploy. Use it only after the owner says to deploy. If the production branch is still `main`, this branch deploy is a Preview. The preview URL can be the judge link. It does not merge anything into `main`.
 
-Hobby plan page, https://vercel.com/docs/plans/hobby:
+Ignored Build Step, https://vercel.com/docs/project-configuration/project-settings :
 
-> The Hobby plan is free and includes a generous set of features on a per month basis.
+> If the command exits with code `1`, the build continues as normal
+> If the command exits with code `0`, the build is immediately aborted, and the deployment state is set to `CANCELED`
+>
+> Canceled builds are counted as full deployments as they execute a build command in the build step.
 
-> As the Hobby plan is a free tier there are no billing cycles. In most cases, if you exceed your usage limits on the Hobby plan, you will have to wait until 30 days have passed before you can use the feature again.
+A custom command that continues only for the prototype branch:
 
-> Developer seats cost $20 per user / month, while Viewer seats are free.
+```bash
+if [ "$VERCEL_GIT_COMMIT_REF" = "cursor/eduflow-agent-prototype-a5df" ]; then exit 1; else exit 0; fi
+```
 
-Included Hobby amounts on that page include the first 100 GB of Fast Data Transfer, the first 10 GB of Fast Origin Transfer, the first 1,000,000 CDN requests, 4 CPU-hours of Active CPU, 360 GB-hours of provisioned memory, and the first 1,000,000 function invocations. The same page says password protection, which is a Pro Deployment Protection extra, is "$20 per month per protected project".
+Put that in Project Settings, Build and Deployment, Ignored Build Step, Custom. Exit 1 builds. Exit 0 cancels. A push to `main` still creates a deployment and then cancels the build, and that canceled build can count toward the quota. It does not change GitHub.
 
-Fair Use Guidelines, https://vercel.com/docs/limits/fair-use-guidelines (page last updated 2026-11-12 in the document header):
+### Recommended path
 
-> Vercel usage is subject to these fair use guidelines across plans and usage-based resources.
+1. Create the Vercel account and the Pro plan only when the owner is ready to pay. Stop there if he is not.
+2. Import only this repository. On the import screen, add no environment variables. Framework: Next.js. Node.js: 22.x, the version in `.github/workflows/ci.yml`. Install: `npm ci`. Build: `npm run build`. Leave Start empty. Vercel serves the Next.js build. `npm start` is only for a local check.
+3. Do not press Deploy yet. If the screen has no other way to save the project, stop and ask the owner. Pressing Deploy builds `main`, which is the old README, not this app.
+4. After a project exists, set Ignored Build Step to the command above so later pushes to `main` do not finish a build.
+5. Set Production, Branch Tracking, to `cursor/eduflow-agent-prototype-a5df`. Do not change GitHub’s default branch.
+6. When the owner approves the deploy, use Deployments, Create Deployment, and enter the branch `cursor/eduflow-agent-prototype-a5df`. If step 5 is already saved, a push to that branch also creates a production deployment. Either one is the deploy. Wait for his yes.
+7. Open the URL and run the checklist below. If the first URL is a Preview, that is enough for judges. Production is only the branch named in Branch Tracking.
 
-The Hobby column on that page repeats the first 100 GB, first 1,000,000 function invocations, first 10 GB origin transfer, 4 hours of active CPU, and 360 GB-hours of provisioned memory. The headings "Examples of fair use" and "Never fair use" were on the page. Their bullet lists did not appear in the copy retrieved on 20 November 2026, so this note does not invent examples.
+Do not deploy `main` on purpose. If import already built it before the ignore rule existed, delete that deployment after the prototype URL works. Deleting is covered below. It does not change Git.
 
-The binding Hobby restriction found the same day is in the Terms of Service, https://vercel.com/legal/terms#hobby-plan:
+## 2. What Pro can cost beyond $20
 
-> You shall only use the Services under a Hobby plan for your personal or non-commercial use.
+Fetched 20 November 2026. Prices are USD and, on the Pro plan page, exclude tax.
 
-The same Hobby section says Vercel may disable or remove a Hobby deployment at its discretion. A competition demo shared with judges is not assumed to be personal or non-commercial. If the owner decides the use is not personal and non-commercial, Hobby does not fit, and the upgrade path on the Hobby page is a Pro seat at $20 per user per month. Spend management exists only on Pro. This review does not choose the plan and does not start a trial.
+https://vercel.com/docs/plans/pro-plan :
 
-A separate Hobby terms sentence, https://vercel.com/legal/terms, says that on a Hobby plan or a trial Pro plan Vercel may use Your Content to train models and may share it with third parties for that purpose. A paid Pro plan does not enable that by default. The demo data is fictional, but text a visitor types would be included in "Your Content". That is a reason to read the terms before hosting, not a reason this file creates an account.
+> $20/month Pro platform fee
+> 1 deploying team seat included
+> $20/month in usage credit
 
-No model price is stated here. Cost per task in the product is not measured. With no API key there is no model call to bill.
+> Once you have used your monthly credit, Vercel bills additional usage on-demand.
 
-## What this hosting would not add
+> By default, Vercel enables spend management notifications for new customers at a spend amount of $200 per billing cycle.
 
-No login, no database, no WhatsApp, no email, no SMS, and no real student data. Reset to demo scenario restores the fictional seed in that browser only (`localStorage` key `eduflow-agent-v2`). The language choice stays in `eduflow-locale`.
+> Additional paid seats (Owner or Member roles) for $20/month each
+> Unlimited free Viewer seats
+
+The same page lists add-ons. Do not turn these on:
+
+- Password Protection: “$20 per month per protected project”
+- Observability Plus: “$1.20 per 1 million events”
+- Web Analytics Plus: “$10/month”
+- Speed Insights Plus: “$10/month per project, plus $0.65 per 10,000 events”
+- Preview Deployment Suffix: “$100/month”
+- Static IPs: “$100/month per project”
+- SAML Single Sign-On: “$300/month”
+- Flags Explorer: “$250/month”
+
+https://vercel.com/pricing also says Pro is “$20/mo.” and “Pro plans have a $20 included credit”. A free first-year domain renews at the normal price after year one. Do not claim a domain unless the owner wants one. The `*.vercel.app` URL is enough.
+
+https://vercel.com/docs/spend-management :
+
+> Setting a budget does not stop usage on its own. To stop incurring costs above the budget amount, turn on Pause production deployments
+
+> Spend Management is available at no additional cost to Pro teams
+
+> On Pro, a team budget only counts usage beyond the monthly credit, while project and product budgets count all of their usage, including usage the credit covers.
+
+> Pausing is not instantaneous. Because Vercel checks your spend every few minutes, projects can keep serving traffic and accruing usage for several minutes after your spend reaches the budget amount.
+
+> Pausing only affects production deployments.
+
+Seats and add-ons are monthly charges and, on that page, are not what the metered budget stops. Do not add seats. Do not add Password Protection. Use a Shareable Link if judges need access through Deployment Protection. A public preview has no login on the two POST routes.
+
+### Settings to turn on before sharing the link
+
+- One project budget of $20 for this project, with Pause production turned on. On Pro that budget counts usage before the credit, so it can pause the project while the $20 credit still covers it.
+- Leave the default team notification, or lower the team on-demand budget from the default $200 toward $0 if the dashboard allows $0. The page says new customers start at $200 of on-demand notifications. $200 is above the owner’s base budget. Lower it. Turn on pause at 100% so the hard stop exists.
+- Notifications at 50%, 75%, and 100% are described on https://vercel.com/changelog/set-budgets-for-projects-and-products-in-spend-management (16 November 2026).
+- No OpenAI key and no Anthropic key, so a public visitor cannot create a model bill.
+- No Observability Plus, no analytics plus, no extra domain, no extra seats.
+
+This app does not measure a dollar cost per task. With no model key there is no model invoice from this repository.
+
+## 3. Build with no keys
+
+Local check, already in CI as well: `npm ci`, then `npm run build`, then `npm start`, with `AI_PROVIDER`, `OPENAI_API_KEY`, and `ANTHROPIC_API_KEY` unset. `POST /api/agent` with a valid reminder returns `source: "template"` and no `sent` field. Tests cover no key, `AI_PROVIDER=none` even when keys are present, OpenAI, and Anthropic. The model calls in tests use a fake `fetch`. No live model was called.
+
+## 4. Checklist after the URL exists
+
+Do this on the live URL. Do not tick a line you did not try.
+
+Desktop (about 1280×800) and a phone width (390×844), in Arabic and in English:
+
+- The banner says class records are simulated and that WhatsApp, email, and SMS never leave the browser.
+- Reset to demo scenario, then Restore. The inbox comes back. Language stays.
+- Prepare a parent draft for Sultan. The badge says Local template draft / مسودة من القالب المحلي.
+- Arabic draft text is right-aligned. English draft text is left-aligned. Check one case where the draft language and the page language differ.
+- Approve the text. Badges include Approved, Sending is simulated / إرسال محاكى, and Not sent / لم تُرسل. Nothing is delivered.
+- The risk pill says it is an experimental indicator from fictional simulated data.
+- Browser network log: requests go to this site’s own host. No `api.openai.com` and no `api.anthropic.com`.
+- Response headers include `X-Content-Type-Options: nosniff`, `Referrer-Policy`, `X-Frame-Options: SAMEORIGIN`, and a Permissions-Policy that disables camera, microphone, and geolocation.
+- `POST /api/agent` with a body larger than 64,000 characters returns HTTP 413.
+
+## 5. How to stop it
+
+Fetched 20 November 2026. These actions do not change GitHub `main`.
+
+- Instant rollback, https://vercel.com/docs/instant-rollback : on the project overview, Instant Rollback, pick an earlier production deployment, Confirm Rollback. “The rollback happens instantaneously.” Afterward, new pushes do not replace that deployment until you promote one again.
+- Pause the project, https://vercel.com/docs/projects/managing-projects : Settings, General, Pause Project. Visitors then see `503 DEPLOYMENT_PAUSED`. Resume is on the same page. Pause stops production traffic. It does not delete the project.
+- Spend pause, https://vercel.com/docs/spend-management : a project budget with Pause production stops that project when the budget is reached. It can lag by a few minutes.
+- Deployment Protection: leave Vercel Authentication on, and share a Shareable Link, if the dashboard offers it. Turning protection off makes the site public. Do not buy Password Protection.
+- Delete one deployment, https://vercel.com/docs/deployments/managing-deployments : Deployments, open the deployment, …, Delete. “Deleting a deployment prevents you from using instant rollback on it.”
+- Delete the project, https://vercel.com/docs/projects/managing-projects : Settings, General, Delete Project, type the name. This deletes deployments, domains, environment variables, and settings.
+- Disconnect Git, https://vercel.com/docs/project-configuration/git-settings : Settings, Git, Connected Git Repository, Disconnect. New pushes then do not deploy. The current URL can stay up until you pause or delete it.
+
+If something looks wrong, pause first. Delete the project only if the owner wants it gone.
+
+## 6. A model later, still off today
+
+`.env.example` has `AI_PROVIDER=none`, empty `OPENAI_API_KEY`, empty `ANTHROPIC_API_KEY`, `OPENAI_MODEL=gpt-4o-mini`, and `ANTHROPIC_MODEL=claude-sonnet-4-5`. No real key is in the repo.
+
+`lib/model-provider.ts` chooses the call:
+
+- `none`, `off`, an unknown value, or a selected provider with an empty key: local template, no network.
+- `openai` plus `OPENAI_API_KEY`: `https://api.openai.com/v1/chat/completions` only.
+- `anthropic` plus `ANTHROPIC_API_KEY`: `https://api.anthropic.com/v1/messages` only. Confirm the model id on Anthropic’s site before enabling it. A rejected model falls back to the template.
+- An empty `AI_PROVIDER` with only `OPENAI_API_KEY` still calls OpenAI, so an older local note keeps working. An Anthropic key does nothing until `AI_PROVIDER=anthropic`.
+
+Any model text still goes through `resultFromModel`. Unsafe or ungrounded text is replaced by the template. The teacher still approves before the card says approved, and approval still does not send.
+
+Do not set either key on Vercel for the public demo.

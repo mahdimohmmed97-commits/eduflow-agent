@@ -18,7 +18,7 @@ On a fresh reset, the inbox trace (`lib/decide.ts`, fed by `lib/risk.ts`) is:
 
 1. **Goal.** Prepare parent follow-ups for students who keep missing work, and send nothing.
 2. **Steps chosen.** Score only due assignments. Urgent cases get a parent draft. A single case stays on watch. Someone back on time gets no message. Stop for approval.
-3. **Data and tools.** The submission record in this browser. Class time is Asia/Dubai or Asia/Riyadh. Wording comes from a local template, or from OpenAI on the server when `OPENAI_API_KEY` is set. WhatsApp, email, and SMS are not connected.
+3. **Data and tools.** The submission record in this browser. Class time is Asia/Dubai or Asia/Riyadh. Wording comes from a local template, or from OpenAI or Anthropic on the server only when `AI_PROVIDER` and that key are set. WhatsApp, email, and SMS are not connected.
 4. **Decision.** From the fictional record, after Reset to demo scenario:
    - Urgent: Sultan Al Mutairi, Maryam Al Otaibi, Ahmed Al Zahrani, Lina Khan.
    - Watch only: Joud Al Balushi, Sara Al Qahtani, Omar Al Harbi, Majed Al Ali.

@@ -15,7 +15,7 @@ EduFlow Agent is a demo for Dubai’s Create AI Agents Championship. A coordinat
 
 The official submission rules read on 20 November 2026 are inventoried in `SUBMISSION_READINESS.md`. Running this repo locally is a developer path. It is not the judge test link. The deadline stated there is 4 January 2027 at 11:59 AM Dubai time (GST).
 
-If `OPENAI_API_KEY` is set, drafts are written with OpenAI. If it is missing, or the call fails, the same screens fill in with realistic templates so the demo still works. The key stays on the server.
+With `AI_PROVIDER=none` or with no key, drafts use the local template. Later, `AI_PROVIDER=openai` or `AI_PROVIDER=anthropic` plus that provider’s key writes the draft on the server. If the call fails, the same screens fill in with the template. The key stays on the server.
 
 ### Features
 
@@ -59,15 +59,15 @@ npm run build
 
 `npm test` was added in the Phase 1 safety pass. It checks missing submissions, rejected requests, reminder wording, and the rule that nothing is sent without a teacher, and that nothing is sent even then.
 
-To use the model instead of the built-in templates, copy the sample env file and add a key:
+The demo leaves `AI_PROVIDER=none`. To use a model later, copy the sample env file, set the provider, and add only that key:
 
 ```bash
 cp .env.example .env.local
 ```
 
 ```bash
-OPENAI_API_KEY=sk-...
-OPENAI_MODEL=gpt-4o-mini
+AI_PROVIDER=openai
+OPENAI_API_KEY=
 ```
 
 Restart `npm run dev` after changing `.env.local`.
@@ -84,7 +84,7 @@ This repository is not deployed. Do not treat any URL as a live demo. A future h
 
 EduFlow Agent نموذج لبطولة صناعة وكلاء الذكاء الاصطناعي في دبي. ترى المنسقة من تأخر في مدرسة بدبي ومركز في الرياض، ويجهّز الوكيل الرسالة التالية بانتظار موافقتها.
 
-إذا وُجد `OPENAI_API_KEY` تُصاغ المسودة عبر OpenAI. إذا غاب المفتاح أو تعذّر الاتصال، تظهر قوالب واقعية وبالأسماء نفسها حتى يكتمل العرض. المفتاح يبقى على الخادم ولا يصل إلى المتصفح.
+مع `AI_PROVIDER=none` أو بلا مفتاح تُستخدم القوالب. لاحقاً يمكن اختيار `openai` أو `anthropic` مع مفتاح ذلك المزوّد فقط. إذا غاب المفتاح أو تعذّر الاتصال، تظهر القوالب. المفتاح يبقى على الخادم ولا يصل إلى المتصفح.
 
 ### المزايا
 
@@ -128,15 +128,15 @@ npm run build
 
 أُضيف `npm test` في جولة السلامة الأولى. يفحص الطلاب الذين لم يسلّموا، والطلبات المرفوضة، وصياغة التذكير، وقاعدة أن الرسالة لا تُرسل من غير المعلمة، ولا تُرسل حتى بعد اعتمادها.
 
-لاستخدام النموذج بدل القوالب، انسخ ملف البيئة وأضف المفتاح:
+العرض يُبقي `AI_PROVIDER=none`. لاستخدام نموذج لاحقاً، انسخ ملف البيئة واختر المزوّد وأضف مفتاحه فقط:
 
 ```bash
 cp .env.example .env.local
 ```
 
 ```bash
-OPENAI_API_KEY=sk-...
-OPENAI_MODEL=gpt-4o-mini
+AI_PROVIDER=openai
+OPENAI_API_KEY=
 ```
 
 أعد تشغيل `npm run dev` بعد تعديل `.env.local`.
