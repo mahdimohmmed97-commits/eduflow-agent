@@ -56,11 +56,15 @@ Working tree: branch `cursor/submission-readiness-f7dd`, after the submission-re
 
 ## GitHub Actions
 
-The last completed Actions run before this branch was pushed is on the merge commit `913ef875da749bf7e8c97f03ebe086829b33b586`:
+Pull request #5, commit `be8bfe4495c8ec7e3833c2fbb60e15936321b5d7`, run 9:
+
+https://github.com/mahdimohmmed97-commits/eduflow-agent/actions/runs/44762753660
+
+That run completed with conclusion `success` on 20 November 2026. It ran lint, typecheck, test, and build on that commit. This paragraph was added after that run, so the commit that contains this paragraph has its own later Actions run.
+
+The prototype merge commit `913ef875da749bf7e8c97f03ebe086829b33b586` also passed:
 
 https://github.com/mahdimohmmed97-commits/eduflow-agent/actions/runs/44759849550
-
-That run completed with conclusion `success` on 20 November 2026. It is the prototype branch after PR #4 was merged. It is not a run of this submission-readiness commit. The run for this commit is added below once GitHub Actions finishes it.
 
 ## Manual checks in this pass
 
