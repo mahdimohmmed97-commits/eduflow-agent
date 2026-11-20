@@ -23,7 +23,7 @@ If `OPENAI_API_KEY` is set, drafts are written with OpenAI. If it is missing, or
 - Arabic interface (right to left) by default, with an English toggle (left to right)
 - Due dates judged in Asia/Dubai or Asia/Riyadh, not the browser’s clock
 - Classes, students, and assignments, including a submission table: on time, late, or not submitted
-- An agent inbox: daily plan, risk scores from patterns across assignments, and prepare, edit, reject, or approve
+- An agent inbox: daily plan, an experimental risk indicator from fictional patterns across assignments, and prepare, edit, reject, or approve
 - Tone (formal or friendly) and channel-ready text for WhatsApp, email, or SMS
 - A short activity log of what the agent noticed, approved, or copied
 - A panel of students who have not submitted, drafts prepared, drafts approved, and measured preparation time. That duration is not time saved for the teacher. Counts from the fictional record are labeled as demo data
@@ -92,7 +92,7 @@ EduFlow Agent نموذج لبطولة صناعة وكلاء الذكاء الا�
 - واجهة عربية من اليمين إلى اليسار افتراضياً، مع تبديل إلى الإنجليزية من اليسار إلى اليمين
 - مواعيد التسليم تُحسب بتوقيت آسيا/دبي أو آسيا/الرياض، لا بساعة المتصفح
 - الصفوف والطلاب والواجبات، مع جدول تسليم: في الموعد، متأخر، أو لم يُسلّم
-- صندوق الوكيل: خطة اليوم، درجة مخاطر من نمط الطالب عبر الواجبات، ثم تجهيز المسودة وتعديلها أو رفضها أو اعتمادها
+- صندوق الوكيل: خطة اليوم، مؤشر مخاطر تجريبي من بيانات خيالية عبر الواجبات، ثم تجهيز المسودة وتعديلها أو رفضها أو اعتمادها
 - نبرة رسمية أو ودّية، ونص جاهز لواتساب أو البريد أو رسالة قصيرة
 - سجل قصير لما رصده الوكيل أو اعتُمد أو نُسخ
 - لوحة بعدّ الطلاب الذين لم يسلّموا، والمسودات المجهزة، والمسودات المعتمدة، ومدة التجهيز المقاسة. هذه المدة ليست وقتاً وفّرته المعلمة. أعداد السجل الخيالي معلّمة كبيانات عرض

@@ -33,8 +33,8 @@ export function runReliabilityChecks(): CheckResult[] {
     {
       id: "maryam-risk",
       pass: Boolean(maryamRisk && maryamRisk.score >= 60 && maryamRisk.pattern === "repeated"),
-      textAr: `مريم العتيبي: المخاطر ${maryamRisk?.score ?? "—"} والنمط ${maryamRisk?.pattern ?? "—"}. المتوقع عاجل ومتكرر.`,
-      textEn: `Maryam Al Otaibi: risk ${maryamRisk?.score ?? "—"}, pattern ${maryamRisk?.pattern ?? "—"}. Expected urgent and repeated.`,
+      textAr: `مريم العتيبي: مؤشر تجريبي ${maryamRisk?.score ?? "—"} من بيانات خيالية، والنمط ${maryamRisk?.pattern ?? "—"}. المتوقع عاجل ومتكرر. ليس تقييماً حقيقياً.`,
+      textEn: `Maryam Al Otaibi: experimental indicator ${maryamRisk?.score ?? "—"} from fictional simulated data, pattern ${maryamRisk?.pattern ?? "—"}. Expected urgent and repeated. Not a real assessment.`,
     },
     {
       id: "noura-improving",

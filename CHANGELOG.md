@@ -1,5 +1,16 @@
 # Changelog
 
+## Draft direction and risk label
+
+- A draft’s text, editor, and approved view use the draft’s own language for `lang`, `dir`, alignment, and `unicode-bidi: plaintext`. An Arabic draft stays right-aligned inside an English page, and an English draft stays left-aligned inside an Arabic page.
+- Every visible risk score and level says it is an experimental indicator calculated from fictional simulated data, not a real assessment.
+
+## Pre-deployment review
+
+- `docs/DEPLOYMENT_VERCEL.md` describes a possible Vercel demo of `cursor/eduflow-agent-prototype-a5df` only. Nothing was deployed. No API key is required.
+- `POST /api/approve` now rejects a body over 64,000 characters, matching the agent route. Response headers from `next.config.ts` set nosniff, a referrer policy, same-origin framing, and disabled camera, microphone, and geolocation.
+- A test checks that a missing `OPENAI_API_KEY` returns the local template and does not call OpenAI. The screen label for that source is "Local template" / "قالب محلي".
+
 ## Official guide pass — 20 November 2026
 
 - `SUBMISSION_READINESS.md` now follows the Submit page, the Submission Guide PDF, and the FAQ read that day. Identify, Build, and Validate are not the official criteria. The deadline in that note is 4 January 2027 at 11:59 AM Dubai time (GST).

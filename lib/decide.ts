@@ -44,8 +44,8 @@ export function followUpTrace(data: DemoData): TraceStep[] {
       id: "steps",
       titleAr: "الخطوات التي اختارها",
       titleEn: "Steps chosen",
-      bodyAr: "يحسب المخاطر من الواجبات المستحقة فقط. العاجل يحصل على مسودة لولي الأمر. الحالة الفردية تبقى ملاحظة. من عاد إلى الموعد لا تصله رسالة. التوقف هنا للموافقة.",
-      bodyEn: "Score only due assignments. Urgent cases get a parent draft. A single case stays on watch. Someone back on time gets no message. Stop here for approval.",
+      bodyAr: "يحسب مؤشراً تجريبياً من الواجبات المستحقة في بيانات محاكاة خيالية، وليس تقييماً حقيقياً. العاجل يحصل على مسودة لولي الأمر. الحالة الفردية تبقى ملاحظة. من عاد إلى الموعد لا تصله رسالة. التوقف هنا للموافقة.",
+      bodyEn: "Calculate an experimental indicator from due assignments in fictional simulated data, not a real assessment. Urgent cases get a parent draft. A single case stays on watch. Someone back on time gets no message. Stop here for approval.",
     },
     {
       id: "tools",

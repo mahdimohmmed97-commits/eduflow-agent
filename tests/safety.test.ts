@@ -8,6 +8,7 @@ import { approveDraft, createPendingDraft, deliverApprovedDraft } from "@/lib/ap
 import { hasUnsafeClaim } from "@/lib/claims";
 import { presentDraft } from "@/lib/channels";
 import { runAgent } from "@/lib/client-agent";
+import { dictionary } from "@/lib/i18n";
 import type { Audience, Channel, Locale, Tone } from "@/lib/types";
 
 const student = {
@@ -254,6 +255,45 @@ test("a draft stays unsent until a teacher approves it, and approval still does 
   const drafted = localResult(reminder());
   assert.equal("sent" in drafted, false);
   assert.equal(drafted.kind, "reminders");
+});
+
+test("with no API key the agent route returns the local template and does not call out", async () => {
+  const originalKey = process.env.OPENAI_API_KEY;
+  const originalFetch = globalThis.fetch;
+  const calls: string[] = [];
+  delete process.env.OPENAI_API_KEY;
+  globalThis.fetch = async (input, init) => {
+    const url = String(input);
+    calls.push(url);
+    if (url.includes("/api/agent")) {
+      const body = typeof init?.body === "string" ? init.body : "";
+      return POST(new Request("http://localhost/api/agent", { method: "POST", body }));
+    }
+    return new Response("should not be called", { status: 500 });
+  };
+  try {
+    const response = await POST(new Request("http://localhost/api/agent", { method: "POST", body: JSON.stringify(reminder()) }));
+    assert.equal(response.status, 200);
+    const body = (await response.json()) as { source?: string; kind?: string; sent?: boolean };
+    assert.equal(body.source, "template");
+    assert.equal(body.kind, "reminders");
+    assert.equal(body.sent, undefined);
+    assert.equal(calls.length, 0);
+    assert.equal(dictionary.en.sourceBadgeTemplate, "Local template draft");
+    assert.equal(dictionary.ar.sourceBadgeTemplate, "مسودة من القالب المحلي");
+    const shown = await runAgent(reminder());
+    assert.equal(shown.ok, true);
+    if (shown.ok) {
+      assert.equal(shown.source, "template");
+      assert.equal(shown.fallback, null);
+      assert.equal(shown.result.source, "template");
+    }
+    assert.equal(calls.some((url) => url.includes("api.openai.com")), false);
+  } finally {
+    if (originalKey === undefined) delete process.env.OPENAI_API_KEY;
+    else process.env.OPENAI_API_KEY = originalKey;
+    globalThis.fetch = originalFetch;
+  }
 });
 
 test("the only API drafts from the supplied record and never delivers a message", async () => {

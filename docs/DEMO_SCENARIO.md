@@ -26,7 +26,7 @@ On a fresh reset, the inbox trace (`lib/decide.ts`, fed by `lib/risk.ts`) is:
 5. **Action.** Write the draft in the tone and channel selected on the page, then wait. Copying does not send.
 6. **Result.** On a fresh reset: 0 drafts approved, 4 urgent cases waiting, 0 messages sent.
 
-The risk numbers are scores over the fictional rows (a missing submission adds more than a late one, and a repeated pattern adds more). The interface labels them as demo scores. They are not a school result. The seed also contains weekly story points 38, 46, and 52. Those points are not shown.
+The risk numbers are an experimental indicator over the fictional simulated rows (a missing submission adds more than a late one, and a repeated pattern adds more). The interface labels every score and level as experimental and fictional. They are not a real assessment and not a school result. The seed also contains weekly story points 38, 46, and 52. Those points are not shown.
 
 ## Which data it uses
 
@@ -42,7 +42,7 @@ The other urgent rows are Maryam Al Otaibi and Ahmed Al Zahrani on Linear Equati
 
 ## Recording script
 
-Start from Reset to demo scenario, with no API key, so the draft source is the local template. Switch the interface to English before recording. The official demo is in English. Say on camera that the students are fictional and that sending is simulated. Times below are a guide for a cut of at most 2 minutes. Do not present the risk scores or the on-time counts as a school result. They are computed from the fictional seed.
+Start from Reset to demo scenario, with no API key, so the draft source is the local template. Switch the interface to English before recording. The official demo is in English. Say on camera that the students are fictional and that sending is simulated. Times below are a guide for a cut of at most 2 minutes. Do not present the risk scores or the on-time counts as a school result. The score is an experimental indicator calculated from fictional simulated data, not a real assessment.
 
 | Time | Do this | What should be on screen |
 | --- | --- | --- |

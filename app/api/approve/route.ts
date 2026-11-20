@@ -1,15 +1,32 @@
 import { approveDraft, createPendingDraft, deliverApprovedDraft, type ApprovalActor } from "@/lib/approval";
 import type { Audience } from "@/lib/types";
 
+const MAX_BODY = 64_000;
+
 function strings(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
   return value.filter((item): item is string => typeof item === "string");
 }
 
 export async function POST(request: Request) {
+  const length = Number(request.headers.get("content-length") ?? "0");
+  if (Number.isFinite(length) && length > MAX_BODY) {
+    return Response.json({ ok: false, sent: false, error: "payload_too_large" }, { status: 413 });
+  }
+
+  let raw = "";
+  try {
+    raw = await request.text();
+  } catch {
+    return Response.json({ ok: false, sent: false, error: "invalid_json" }, { status: 400 });
+  }
+  if (raw.length > MAX_BODY) {
+    return Response.json({ ok: false, sent: false, error: "payload_too_large" }, { status: 413 });
+  }
+
   let body: unknown;
   try {
-    body = await request.json();
+    body = JSON.parse(raw);
   } catch {
     return Response.json({ ok: false, sent: false, error: "invalid_json" }, { status: 400 });
   }
