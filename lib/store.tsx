@@ -229,7 +229,7 @@ export function recordApproval(input: {
   text: string;
   subject: string;
   locale?: Locale;
-  source?: "openai" | "template" | "local";
+  source?: DraftSource;
   actor: "teacher";
   textAr: string;
   textEn: string;

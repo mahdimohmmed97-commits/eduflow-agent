@@ -15,7 +15,7 @@ flowchart TD
   decide[lib/decide.ts and lib/risk.ts]
   client[lib/client-agent.ts]
   agentApi["POST /api/agent"]
-  model[OpenAI chat completions when OPENAI_API_KEY is set]
+  model[OpenAI or Anthropic only when AI_PROVIDER and that key are set]
   template[Local template in lib/agent.ts]
   claims[lib/claims.ts]
   approveUi[Approve button in the inbox]
@@ -59,7 +59,7 @@ flowchart TD
 ## Data sources
 
 - Fictional seed only. There is no school database and no real student data.
-- Optional `OPENAI_API_KEY` on the server. The browser never receives the key. If the key is missing, the template is used.
+- Optional `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` on the server, and only when `AI_PROVIDER` selects that provider. The browser never receives a key. The demo default is `none`, which uses the template.
 - The reminder request sent to the server contains names, class, subject, assignment, due date, tone, and status. It does not contain the parent phone number (`lib/agent.ts`, `parseReminders`).
 - Edits stay in `localStorage`. There is no login.
 

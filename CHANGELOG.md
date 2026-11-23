@@ -1,5 +1,10 @@
 # Changelog
 
+## Vercel prep, still not deployed
+
+- `docs/DEPLOYMENT_VERCEL.md` explains how to host `cursor/eduflow-agent-prototype-a5df` without changing `main`, what Pro can cost beyond the $20 platform fee, how to pause or delete a project, and a checklist for the live URL. Nothing was deployed.
+- `AI_PROVIDER` can later be `none`, `openai`, or `anthropic`. The default and an empty key stay on the local template. No key is set. Model text still passes the claims check, and approval still does not send.
+
 ## Draft direction and risk label
 
 - A draft’s text, editor, and approved view use the draft’s own language for `lang`, `dir`, alignment, and `unicode-bidi: plaintext`. An Arabic draft stays right-aligned inside an English page, and an English draft stays left-aligned inside an Arabic page.

@@ -22,7 +22,7 @@ Open http://localhost:3000.
 
 The branch above is the submission-readiness branch. The prototype it is based on is `cursor/eduflow-agent-prototype-a5df`. `main` does not contain the app.
 
-Leave `OPENAI_API_KEY` unset. Drafts then use the local template, which is the path in `docs/DEMO_SCENARIO.md`. To try the model later, copy `.env.example` to `.env.local`, set the key on the server, and restart `npm run dev`. Do not put the key in the browser or in a commit.
+Leave `AI_PROVIDER` as `none` and leave both API keys unset. Drafts then use the local template, which is the path in `docs/DEMO_SCENARIO.md`. To try a model later, copy `.env.example` to `.env.local`, set `AI_PROVIDER` to `openai` or `anthropic`, set only that key, and restart the server. Do not put a key in the browser or in a commit.
 
 ## What to click
 
