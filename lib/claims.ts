@@ -1,3 +1,5 @@
+import { checkAgainstFacts, type DraftRejection } from "@/lib/draft-validator";
+
 const UNSAFE_CLAIM =
   /full\s+marks?|guaranteed\s+grades?|guarantee[sd]?\s+(?:a\s+|the\s+|your\s+)?grades?|keeps?\s+the\s+(?:full\s+)?marks?|protect(?:s|ed)?\s+the\s+marks?|\byour\s+marks?\b|\bthe\s+marks?\b|marks?\s+will|grades?\s+will|school\s+policy|according\s+to\s+(?:the\s+|our\s+)?(?:school\s+)?policy|automatic\s+zero|zero\s+for|الدرجة\s+كاملة|درجة\s+كاملة|يحفظ\s+لك\s+الدرجة|تحفظ\s+الدرجة|تقييمه|تقييمها|تقييمك|تقييمكم|سياسة\s+(?:المدرسة|المركز)|حسب\s+اللائحة|اللائحة\s+المدرسية|خصم\s+الدرجات|صفر\s+في\s+الواجب|درجة\s+مضمونة|نضمن/iu;
 
@@ -10,11 +12,16 @@ export function hasUnsafeClaim(text: string): boolean {
   return new RegExp(UNSAFE_CLAIM.source, "iu").test(text);
 }
 
+/**
+ * Phase 9: reminder text is checked by the layered validator (lib/draft-validator.ts): record facts are masked and
+ * the writer's remaining words may carry no number, date, grade, policy, promise, delivery claim, link, instruction,
+ * attendance claim or other person's name. The old keyword list stays as an extra layer.
+ */
 export function reminderTextIsGrounded(text: string, allowedParts: string[], otherNames: string[], requiredNames: string[]): boolean {
   if (!text.trim()) return false;
   if (!includesRequiredName(text, requiredNames)) return false;
-  if (mentionsAny(text, otherNames)) return false;
-  return sharedFactsAreGrounded(text, allowedParts);
+  if (hasUnsafeClaim(text)) return false;
+  return checkAgainstFacts(text, allowedParts, otherNames).length === 0 && sharedFactsAreGrounded(text, allowedParts);
 }
 
 export function summaryTextIsGrounded(text: string, allowedParts: string[]): boolean {
@@ -24,15 +31,19 @@ export function summaryTextIsGrounded(text: string, allowedParts: string[]): boo
 
 export type EditBlockReason = "empty" | "unsupported_claim" | "unknown_fact" | "other_student";
 
+const CLAIM_REASONS = new Set<DraftRejection>(["grade_or_score", "school_policy", "promise", "send_claim", "instruction_text", "attendance_or_behaviour"]);
+
+/** Teacher-edited text is re-validated before approval with the same layers as model text. */
 export function reviewTeacherEdit(
   text: string,
   allowedParts: string[],
   otherNames: string[],
 ): { ok: true } | { ok: false; reason: EditBlockReason } {
   if (!text.trim()) return { ok: false, reason: "empty" };
-  if (hasUnsafeClaim(text)) return { ok: false, reason: "unsupported_claim" };
-  if (mentionsAny(text, otherNames)) return { ok: false, reason: "other_student" };
-  if (!sharedFactsAreGrounded(text, allowedParts)) return { ok: false, reason: "unknown_fact" };
+  const reasons = checkAgainstFacts(text, allowedParts, otherNames);
+  if (hasUnsafeClaim(text) || reasons.some((reason) => CLAIM_REASONS.has(reason))) return { ok: false, reason: "unsupported_claim" };
+  if (reasons.includes("other_student") || mentionsAny(text, otherNames)) return { ok: false, reason: "other_student" };
+  if (reasons.length > 0 || !sharedFactsAreGrounded(text, allowedParts)) return { ok: false, reason: "unknown_fact" };
   return { ok: true };
 }
 

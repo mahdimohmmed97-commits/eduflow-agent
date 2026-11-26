@@ -80,5 +80,5 @@ harness (`eval/src/providers.ts`) already omits sampling parameters and records 
 | Which model resists the 8 injection cases? | NOT TESTED |
 | Real tokens per draft, including thinking/reasoning tokens | NOT TESTED |
 | Latency from the Gulf region | NOT TESTED |
-| Whether `output_config.effort` is accepted by Haiku 5.5 with API version `2023-06-01` | ASSUMPTION — confirm in the first approved run |
+| Whether `output_config.effort` (and `output_config.format`) is accepted by Haiku 5.5 with API version `2026-10-21` (the version used in the docs examples; Phase 9 moved both the app and the eval adapter to it) | ASSUMPTION — confirm in the first approved run |
 | Minimum prepaid credit purchase on each platform | UNVERIFIED |

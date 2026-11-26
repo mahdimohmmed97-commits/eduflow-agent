@@ -343,9 +343,16 @@ test("the only API drafts from the supplied record and never delivers a message"
     const oversized = await POST(new Request("http://localhost/api/agent", { method: "POST", body: `{"pad":"${"x".repeat(64_000)}"}` }));
     assert.equal(oversized.status, 413);
 
+    // Phase 9: a key alone never turns a provider on; AI_PROVIDER must name it explicitly.
     delete process.env.AI_PROVIDER;
     delete process.env.ANTHROPIC_API_KEY;
     process.env.OPENAI_API_KEY = "test-key";
+    globalThis.fetch = async () => {
+      throw new Error("must not be called without AI_PROVIDER");
+    };
+    const keyOnly = await POST(new Request("http://localhost/api/agent", { method: "POST", body: JSON.stringify(valid) }));
+    assert.equal(((await keyOnly.json()) as { source?: string }).source, "template");
+    process.env.AI_PROVIDER = "openai";
     globalThis.fetch = async (input) => {
       calls.push(String(input));
       return Response.json({

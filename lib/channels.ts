@@ -47,7 +47,7 @@ function smsText(input: ChannelInput): string {
   if (input.locale === "ar") {
     if (input.audience === "student") {
       return input.status === "late"
-        ? `${input.givenName}: وصل «${input.assignmentTitle}» بعد الموعد (${input.dueLabel}). شكراً لإرساله، والموعد القادم في الوقت أفضل. ${input.teacherName}`
+        ? `${input.givenName}: وصل «${input.assignmentTitle}» بعد الموعد (${input.dueLabel}). شكراً لإرساله، والتسليم في الموعد أفضل في المرات القادمة. ${input.teacherName}`
         : `${input.givenName}: واجب «${input.assignmentTitle}» كان موعده ${input.dueLabel} ولم يصل. أرسله اليوم لو تقدر. ${input.teacherName}`;
     }
     return input.status === "late"

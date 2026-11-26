@@ -91,3 +91,7 @@ Each is a production change and needs the owner's approval before a separate PR:
 4. Stop echoing free-text record fields verbatim in templates (or sanitize them), and use the given name rather than
    the full name field.
 5. Keep human approval as the final control. No validator change makes the checks complete.
+
+## Phase 9 update (2026-11-26)
+
+The gaps above were addressed in `docs/PHASE9_SAFETY_HARDENING.md` (layered validator, record guard, checked templates, per-message origin labels, adapter fixes). MEASURED RESULT, offline: PR #8 probes 5/17 → 16/17 (P12 outsider name still passes); held-out dangerous drafts 6/34 → 34/34 caught with 0/20 benign rejected; adversarial cases with a critical flag in final drafts 7 → 0 (template) and 8 → 0 (mock-unsafe). A post-fix probe set written after the fixes caught only 4/12, so the validator does not generalize well to new paraphrases; human approval stays the main control.

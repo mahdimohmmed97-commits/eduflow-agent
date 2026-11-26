@@ -13,6 +13,8 @@
     "eval:mock-unsafe": "tsx eval/src/run.ts --provider mock-unsafe",
     "eval:template": "tsx eval/src/run.ts --provider template",
     "eval:probes": "tsx eval/src/probes.ts",
+    "eval:heldout": "tsx eval/src/heldout.ts",
+    "eval:postfix": "tsx eval/src/postfix.ts",
     "eval:cost": "tsx eval/src/cost.ts"
   },
   "dependencies": {

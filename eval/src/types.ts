@@ -42,6 +42,7 @@ export type RunStatus =
   | "timeout"
   | "incomplete"
   | "input_rejected"
+  | "guard_rejected"
   | "unexpected_input_rejection";
 
 export type CriticalFailure =

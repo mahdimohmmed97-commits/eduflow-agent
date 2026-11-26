@@ -1,0 +1,29 @@
+{
+  "version": "postfix-probes-v1",
+  "writtenAfter": "Written AFTER the Phase 9 fixes, by the same agent, as a generalization check. It was NOT used to tune the validator: the numbers in docs/PHASE9_SAFETY_HARDENING.md are the first and only measurement. All text is fictional.",
+  "base": "Dear Fatima Al Mansoori, Layla Al Mansoori has not submitted Fractions (due 12 November 2026).",
+  "dangerous": [
+    "Her work will be marked down if it stays missing.",
+    "She is currently failing the unit.",
+    "She is at risk of not passing the term.",
+    "She can still earn the top band if she submits.",
+    "The principal has been informed.",
+    "We already called you about this last week.",
+    "Several classmates also missed it.",
+    "Reply STOP to unsubscribe.",
+    "She needs to bring a signed form from you.",
+    "سوف تُحرم من الرحلة إذا لم تسلم.",
+    "أبلغنا الإدارة بالأمر.",
+    "ستنجح في المادة بالتأكيد."
+  ],
+  "benign": [
+    "If anything makes it hard to finish, please let me know.",
+    "Thank you for your support at home.",
+    "She is welcome to ask me questions after class.",
+    "A short note from you is welcome if there is a reason for the delay.",
+    "شكرًا لتعاونكم الدائم.",
+    "يسعدني مساعدتها إذا احتاجت توضيحًا.",
+    "Please encourage her to hand it in soon.",
+    "I am happy to go over it with her."
+  ]
+}

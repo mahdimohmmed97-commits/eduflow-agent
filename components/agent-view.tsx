@@ -8,10 +8,15 @@ import { Button, CopyButton, PageIntro, buttonClass, inputClass } from "@/compon
 import { ActivityLog } from "@/components/activity-log";
 import { Inbox } from "@/components/inbox";
 import {
+  draftFacts,
+  guardReminderRequest,
+  type DraftOrigin,
   type ReminderDraft,
   type ReminderRequest,
   type SummaryRequest,
 } from "@/lib/agent";
+import { validateReminderText } from "@/lib/draft-validator";
+import { issueText, originClass, originKey, reasonText } from "@/lib/safety-labels";
 import { runAgent, type ConnectionFallback, type ShownSource } from "@/lib/client-agent";
 import type { MessageKey } from "@/lib/i18n";
 import { formatDate, isPastDue, zoneOf } from "@/lib/dates";
@@ -38,8 +43,9 @@ export function AgentView() {
   const [classChoice, setClassChoice] = useState("all");
   const [picked, setPicked] = useState<{ assignmentId: string; ids: string[] } | null>(null);
   const [loading, setLoading] = useState(false);
-  const [reminders, setReminders] = useState<{ key: string; source: ShownSource; fallback: ConnectionFallback | null; drafts: ReminderDraft[] } | null>(null);
-  const [summary, setSummary] = useState<{ key: string; source: ShownSource; fallback: ConnectionFallback | null; text: string } | null>(null);
+  const [reminders, setReminders] = useState<{ key: string; source: ShownSource; fallback: ConnectionFallback | null; drafts: ReminderDraft[]; request: ReminderRequest } | null>(null);
+  const [summary, setSummary] = useState<{ key: string; source: ShownSource; fallback: ConnectionFallback | null; text: string; origin: DraftOrigin } | null>(null);
+  const [guardNotice, setGuardNotice] = useState<{ key: string; lines: string[] } | null>(null);
 
   if (!data) return <ContentSkeleton />;
   const record = data;
@@ -90,11 +96,18 @@ export function AgentView() {
     setLoading(true);
     const outcome = await runAgent(request);
     if (!outcome.ok) {
+      if (outcome.error === "untrusted_record") {
+        setReminders(null);
+        setGuardNotice({ key: reminderKey, lines: (outcome.issues ?? []).map((issue) => issueText(issue, locale)) });
+        logActivity("refused", "توقفت مسودات التذكير: بيانات السجل غير موثوقة. لم يُكتب شيء ولم يُرسل.", "Reminder drafts stopped: the record data is untrusted. Nothing was written or sent.");
+      }
       setLoading(false);
       return;
     }
+    setGuardNotice(null);
+    const guarded = guardReminderRequest(request);
     const drafts = outcome.result.kind === "reminders" ? outcome.result.drafts : [];
-    setReminders({ key: reminderKey, source: outcome.source, fallback: outcome.fallback, drafts });
+    setReminders({ key: reminderKey, source: outcome.source, fallback: outcome.fallback, drafts, request: guarded.ok && guarded.request.kind === "reminders" ? guarded.request : request });
     logActivity(
       "plan",
       `صيغت مسودات تذكير لـ«${tx(locale, assignment.titleAr, assignment.titleEn)}». لم تُرسل.`,
@@ -112,7 +125,8 @@ export function AgentView() {
       return;
     }
     const text = outcome.result.kind === "summary" ? outcome.result.summary : "";
-    setSummary({ key: summaryKey, source: outcome.source, fallback: outcome.fallback, text });
+    const origin: DraftOrigin = outcome.result.kind === "summary" ? outcome.result.summaryOrigin : "template";
+    setSummary({ key: summaryKey, source: outcome.source, fallback: outcome.fallback, text, origin });
     logActivity("summary", "صيغ ملخص الأسبوع للمراجعة. لم يُرسل.", "Drafted the weekly summary for review. It was not sent.");
     setLoading(false);
   }
@@ -240,6 +254,16 @@ export function AgentView() {
           </section>
 
           <section className="space-y-4">
+            {guardNotice && guardNotice.key === reminderKey ? (
+              <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm leading-6 text-rose-950" role="alert">
+                <p className="font-semibold">{t("recordRejected")}</p>
+                <ul className="mt-2 list-disc ps-5">
+                  {guardNotice.lines.map((line) => (
+                    <li key={line}>{line}</li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
             {!visibleReminders ? (
               <div className="rounded-3xl border border-dashed border-line bg-paper px-5 py-12 text-center">
                 <p className="text-lg font-semibold">{t("draftMark")}</p>
@@ -250,11 +274,17 @@ export function AgentView() {
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <h2 className="text-lg font-semibold">{t("messagesReady")}</h2>
-                    <p className="text-sm text-muted">{sourceCaption(visibleReminders.source, t)}</p>
+                    <p className="text-sm text-muted">{sourceCaption(visibleReminders.source, t, visibleReminders.drafts.flatMap((draft) => [draft.studentOrigin, draft.parentOrigin]))}</p>
                     <FallbackLine fallback={visibleReminders.fallback} t={t} />
                   </div>
                   <CopyButton
                     text={visibleReminders.drafts
+                      .filter((draft) => {
+                        const student = visibleReminders.request.students.find((item) => item.id === draft.studentId);
+                        if (!student) return false;
+                        const facts = draftFacts(visibleReminders.request, student);
+                        return [draft.studentMessage, draft.parentMessage].every((text) => validateReminderText(text, facts).ok);
+                      })
                       .map((draft) => {
                         const student = flagged.find((item) => item.student.id === draft.studentId);
                         const name = student ? tx(draftLocale, student.student.nameAr, student.student.nameEn) : draft.studentId;
@@ -270,6 +300,16 @@ export function AgentView() {
                   if (!student) return null;
                   const name = tx(draftLocale, student.nameAr, student.nameEn);
                   const parent = tx(draftLocale, student.parentNameAr, student.parentNameEn);
+                  const requestStudent = visibleReminders.request.students.find((item) => item.id === draft.studentId);
+                  const facts = requestStudent ? draftFacts(visibleReminders.request, requestStudent) : null;
+                  const problems = (text: string, origin: DraftOrigin) => {
+                    if (origin === "blocked") return null;
+                    if (!facts) return [t("emptyBlocked")];
+                    const check = validateReminderText(text, facts);
+                    return check.ok ? null : check.reasons.map((reason) => reasonText(reason, draftLocale));
+                  };
+                  const blocked = (draft.blockReasons ?? []).map((reason) => reasonText(reason, draftLocale));
+                  const headerOrigin: DraftOrigin | "mixed" = draft.studentOrigin === draft.parentOrigin ? draft.studentOrigin : "mixed";
                   return (
                     <article key={draft.studentId} className="rounded-3xl border border-line bg-paper p-4 shadow-sm sm:p-5">
                       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
@@ -281,9 +321,7 @@ export function AgentView() {
                           <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-950 ring-1 ring-amber-200">
                             {t("statusPending")}
                           </span>
-                          <span className="rounded-full bg-teal/10 px-3 py-1 text-xs font-semibold text-teal">
-                            {visibleReminders.source === "openai" || visibleReminders.source === "anthropic" ? t("sourceBadgeAi") : visibleReminders.source === "local" ? t("sourceBadgeLocal") : t("sourceBadgeTemplate")}
-                          </span>
+                          <span className={`rounded-full px-3 py-1 text-xs font-semibold ${originClass(headerOrigin)}`}>{t(originKey(headerOrigin))}</span>
                           <button type="button" className={buttonClass.secondary} onClick={() => rejectReminder(draft.studentId)}>
                             {t("rejectDraft")}
                           </button>
@@ -295,6 +333,13 @@ export function AgentView() {
                           who={name}
                           locale={draftLocale}
                           text={draft.studentMessage}
+                          origin={draft.studentOrigin}
+                          originLabel={t(originKey(draft.studentOrigin))}
+                          blockedNote={draft.studentOrigin === "blocked" ? `${t("messageBlocked")} ${blocked.join(" · ")}` : undefined}
+                          editWarning={(() => {
+                            const found = problems(draft.studentMessage, draft.studentOrigin);
+                            return found ? `${t("editNeedsReview")} ${found.join(" · ")}` : undefined;
+                          })()}
                           copyLabel={t("copyStudent")}
                           copiedLabel={t("copied")}
                           editorLabel={t("draftEditorLabel")}
@@ -307,6 +352,13 @@ export function AgentView() {
                           phone={student.parentPhone}
                           phoneHint={t("phoneHint")}
                           text={draft.parentMessage}
+                          origin={draft.parentOrigin}
+                          originLabel={t(originKey(draft.parentOrigin))}
+                          blockedNote={draft.parentOrigin === "blocked" ? `${t("messageBlocked")} ${blocked.join(" · ")}` : undefined}
+                          editWarning={(() => {
+                            const found = problems(draft.parentMessage, draft.parentOrigin);
+                            return found ? `${t("editNeedsReview")} ${found.join(" · ")}` : undefined;
+                          })()}
                           copyLabel={t("copyParent")}
                           copiedLabel={t("copied")}
                           editorLabel={t("draftEditorLabel")}
@@ -355,7 +407,7 @@ export function AgentView() {
                   <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
                     <div>
                       <h2 className="text-lg font-semibold">{t("summaryReady")}</h2>
-                      <p className="text-sm text-muted">{sourceCaption(visibleSummary.source, t)}</p>
+                      <p className="text-sm text-muted">{sourceCaption(visibleSummary.source, t, [visibleSummary.origin])}</p>
                       <FallbackLine fallback={visibleSummary.fallback} t={t} />
                     </div>
                     <CopyButton text={visibleSummary.text} label={t("copy")} copiedLabel={t("copied")} />
@@ -399,6 +451,10 @@ function MessageCard({
   who,
   locale,
   text,
+  origin,
+  originLabel,
+  blockedNote,
+  editWarning,
   copyLabel,
   copiedLabel,
   phone,
@@ -411,6 +467,10 @@ function MessageCard({
   who: string;
   locale: Locale;
   text: string;
+  origin?: DraftOrigin;
+  originLabel?: string;
+  blockedNote?: string;
+  editWarning?: string;
   copyLabel: string;
   copiedLabel: string;
   phone?: string;
@@ -422,7 +482,10 @@ function MessageCard({
   const textProps = draftTextAttributes(locale, text);
   return (
     <div className={`flex h-full flex-col rounded-2xl border p-4 ${warm ? "border-amber-200 bg-[#fbf7ef]" : "border-teal/20 bg-[#f3faf9]"}`}>
-      <p className="text-xs font-semibold text-muted">{title}</p>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-xs font-semibold text-muted">{title}</p>
+        {origin && originLabel ? <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${originClass(origin)}`}>{originLabel}</span> : null}
+      </div>
       <p className="mt-1 font-semibold" {...draftTextAttributes(locale, who)}>{who}</p>
       {phone ? (
         <p className="mt-1 text-xs text-muted">
@@ -430,7 +493,11 @@ function MessageCard({
           {phoneHint ? ` · ${phoneHint}` : ""}
         </p>
       ) : null}
-      {onTextChange ? (
+      {blockedNote ? (
+        <p className="mt-3 flex-1 rounded-xl bg-rose-50 px-3 py-2 text-sm leading-6 text-rose-950" role="alert">
+          {blockedNote}
+        </p>
+      ) : onTextChange ? (
         <textarea
           aria-label={editorLabel ?? title}
           className={`${inputClass} mt-3 min-h-48 flex-1 whitespace-pre-wrap`}
@@ -441,9 +508,16 @@ function MessageCard({
       ) : (
         <p className="mt-3 flex-1 whitespace-pre-wrap text-sm leading-7" {...textProps}>{text}</p>
       )}
-      <div className="mt-4">
-        <CopyButton text={text} label={copyLabel} copiedLabel={copiedLabel} />
-      </div>
+      {editWarning ? (
+        <p className="mt-3 rounded-xl bg-rose-50 px-3 py-2 text-sm leading-6 text-rose-950" role="alert">
+          {editWarning}
+        </p>
+      ) : null}
+      {blockedNote || editWarning ? null : (
+        <div className="mt-4">
+          <CopyButton text={text} label={copyLabel} copiedLabel={copiedLabel} />
+        </div>
+      )}
     </div>
   );
 }
@@ -458,9 +532,12 @@ function FallbackLine({ fallback, t }: { fallback: ConnectionFallback | null; t:
   );
 }
 
-function sourceCaption(source: ShownSource, t: Translator) {
+function sourceCaption(source: ShownSource, t: Translator, origins: DraftOrigin[] = []) {
+  if (source === "mixed") return t("mixedCaption");
   if (source === "openai" || source === "anthropic") return t("openaiCaption");
   if (source === "local") return t("offlineCaption");
+  if (origins.includes("api_failure_fallback")) return t("apiFailureCaption");
+  if (origins.includes("rejected_ai_output")) return t("rejectedCaption");
   return t("templateCaption");
 }
 

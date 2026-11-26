@@ -13,6 +13,7 @@ import { ValuePanel } from "@/components/value-panel";
 import { approvePreparedDraft, editPreparedDraft, logActivity, rejectPreparedDraft, savePreparedDraft, setChannel, setTone, useEduFlow } from "@/lib/store";
 import { draftTextAttributes } from "@/lib/draft-direction";
 import { givenName, tx, fill } from "@/lib/text";
+import { issueText, originClass, originKey, reasonText } from "@/lib/safety-labels";
 import { TEACHER, type Audience, type Channel, type DraftSource, type TeacherDraft, type Tone } from "@/lib/types";
 import { CopyButton, buttonClass, inputClass } from "@/components/ui";
 
@@ -75,12 +76,21 @@ export function Inbox() {
       ],
     });
     if (!outcome.ok) {
+      if (outcome.error === "untrusted_record") {
+        setNotice(`${t("recordRejected")} ${(outcome.issues ?? []).map((issue) => issueText(issue, locale)).join(" · ")}`);
+        logActivity("refused", `توقفت مسودة ${item.student.nameAr}: بيانات السجل غير موثوقة.`, `The draft for ${item.student.nameEn} stopped: the record data is untrusted.`);
+      }
       if (manageBusy) setBusy(null);
       return;
     }
     const draft = outcome.result.kind === "reminders" ? outcome.result.drafts[0] : undefined;
     const fullText = audience === "parent" ? draft?.parentMessage : draft?.studentMessage;
-    if (!fullText) {
+    const origin = audience === "parent" ? draft?.parentOrigin : draft?.studentOrigin;
+    if (!fullText || !origin || origin === "blocked") {
+      if (origin === "blocked") {
+        setNotice(`${t("messageBlocked")} ${(draft?.blockReasons ?? []).map((reason) => reasonText(reason, locale)).join(" · ")}`);
+        logActivity("refused", `لم تُعرض مسودة ${item.student.nameAr} لأنها لم تجتز فحص السلامة.`, `The draft for ${item.student.nameEn} was not shown because it failed the safety check.`);
+      }
       if (manageBusy) setBusy(null);
       return;
     }
@@ -116,7 +126,7 @@ export function Inbox() {
       text: presented.text,
       subject: presented.subject,
       locale,
-      source: outcome.source,
+      source: origin,
       fallback: outcome.fallback,
       prepareMs: performance.now() - started,
       allowedParts: [
@@ -457,9 +467,7 @@ export function Inbox() {
 }
 
 function sourceLabel(source: DraftSource, t: (key: MessageKey) => string) {
-  if (source === "openai" || source === "anthropic") return t("sourceBadgeAi");
-  if (source === "local") return t("sourceBadgeLocal");
-  return t("sourceBadgeTemplate");
+  return t(originKey(source));
 }
 
 function blockLabel(reason: NonNullable<TeacherDraft["blockReason"]>, t: (key: MessageKey) => string) {
@@ -486,7 +494,7 @@ function StatusBadge({ label, tone }: { label: string; tone: "pending" | "approv
 }
 
 function SourceBadge({ source, label }: { source: DraftSource; label: string }) {
-  const toneClass = source === "openai" || source === "anthropic" ? "bg-navy text-white" : source === "local" ? "bg-white text-ink ring-1 ring-line" : "bg-teal/10 text-teal";
+  const toneClass = originClass(source);
   return <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${toneClass}`}>{label}</span>;
 }
 

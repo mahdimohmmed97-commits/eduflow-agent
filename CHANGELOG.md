@@ -1,5 +1,13 @@
 # Changelog
 
+## Phase 9: safety hardening, no live calls
+
+- Layered validation (`lib/safety-text.ts`, `lib/draft-validator.ts`) replaces the keyword list for model text, local templates and teacher edits: record facts are masked and the remaining words may carry no number (Arabic-Indic or Western), number word, date, grade, policy, promise, delivery claim, link, instruction, attendance claim or other person's name; the right student, the assignment and the record status are checked.
+- Record guard (`lib/record-guard.ts`): untrusted record fields stop the request with `untrusted_record` and reasons (HTTP 422); invisible/bidi characters are removed; a missing parent name blocks only the parent message.
+- Every message carries its own origin and badge (Claude, GPT, local template, rejected unsafe output, fallback after API failure, blocked). A template is never labeled as AI; mixed results say "mixed".
+- Provider adapter: no `temperature`; Anthropic `2026-10-21` with JSON-schema structured output and an 8000-token budget; OpenAI `max_completion_tokens` 16000 with strict JSON schema; typed errors for timeout, HTTP, truncation, refusal and empty output; defaults `claude-haiku-5-5` / `gpt-6-luna`; a key alone no longer turns a provider on. `AI_PROVIDER=none` stays the default. Tested with mocked fetch only.
+- Held-out set committed before the fixes, plus a post-fix probe set; before/after numbers in `docs/PHASE9_SAFETY_HARDENING.md`, including the misses.
+
 ## AI model evaluation kit (Claude vs GPT), no live calls
 
 - `eval/` adds 30 fictional test cases, a harness that runs them through the production parser, prompt, validator and approval path, and offline modes (`template`, `mock`, `mock-unsafe`). Live Anthropic/OpenAI adapters exist only in `eval/` and stay disabled unless the owner sets an approval phrase, a spending cap and eval-only keys. No model was called and no key was added.
