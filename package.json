@@ -8,7 +8,12 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test": "node --import tsx --test tests/*.test.ts"
+    "test": "node --import tsx --test tests/*.test.ts",
+    "eval:mock": "tsx eval/src/run.ts --provider mock",
+    "eval:mock-unsafe": "tsx eval/src/run.ts --provider mock-unsafe",
+    "eval:template": "tsx eval/src/run.ts --provider template",
+    "eval:probes": "tsx eval/src/probes.ts",
+    "eval:cost": "tsx eval/src/cost.ts"
   },
   "dependencies": {
     "next": "16.4.6",

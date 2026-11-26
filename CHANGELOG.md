@@ -1,5 +1,10 @@
 # Changelog
 
+## AI model evaluation kit (Claude vs GPT), no live calls
+
+- `eval/` adds 30 fictional test cases, a harness that runs them through the production parser, prompt, validator and approval path, and offline modes (`template`, `mock`, `mock-unsafe`). Live Anthropic/OpenAI adapters exist only in `eval/` and stay disabled unless the owner sets an approval phrase, a spending cap and eval-only keys. No model was called and no key was added.
+- `docs/AI_MODEL_COMPARISON.md`, `AI_EVALUATION_METHODOLOGY.md`, `AI_SAFETY_EVALUATION.md`, `AI_COST_ANALYSIS.md` and `AI_MODEL_RECOMMENDATION.md` record verified prices and model IDs (2026-11-26), validator gaps found by probes, cost estimates, and a provisional recommendation. Production behaviour is unchanged.
+
 ## Vercel prep, still not deployed
 
 - `docs/DEPLOYMENT_VERCEL.md` explains how to host `cursor/eduflow-agent-prototype-a5df` without changing `main`, what Pro can cost beyond the $20 platform fee, how to pause or delete a project, and a checklist for the live URL. Nothing was deployed.
