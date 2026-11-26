@@ -1,0 +1,51 @@
+@import "tailwindcss";
+
+@theme {
+  --color-sand: #f3efe7;
+  --color-paper: #fffdf9;
+  --color-ink: #142033;
+  --color-navy: #0c2138;
+  --color-teal: #0f6e6b;
+  --color-teal-2: #12817d;
+  --color-gold: #d7b56d;
+  --color-gold-2: #8a6428;
+  --color-line: #e5ddd0;
+  --color-muted: #5d6b7c;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--color-sand);
+  color: var(--color-ink);
+  font-family: var(--font-arabic), var(--font-latin), "Segoe UI", Tahoma, sans-serif;
+}
+
+html[dir="ltr"] body {
+  font-family: var(--font-latin), var(--font-arabic), "Segoe UI", sans-serif;
+}
+
+.hero-panel {
+  background:
+    radial-gradient(900px 280px at 100% 0%, rgba(215, 181, 109, 0.28), transparent 55%),
+    radial-gradient(700px 320px at 0% 100%, rgba(18, 129, 125, 0.45), transparent 60%),
+    linear-gradient(145deg, #0c2138 0%, #14344f 52%, #0f6e6b 100%);
+}
+
+html[dir="ltr"] .hero-panel {
+  background:
+    radial-gradient(900px 280px at 0% 0%, rgba(215, 181, 109, 0.28), transparent 55%),
+    radial-gradient(700px 320px at 100% 100%, rgba(18, 129, 125, 0.45), transparent 60%),
+    linear-gradient(215deg, #0c2138 0%, #14344f 52%, #0f6e6b 100%);
+}
+
+.brand-bar {
+  height: 4px;
+  background: linear-gradient(90deg, #0f6e6b, #d7b56d 48%, #0c2138);
+}
+
+::selection {
+  background: #d5ebe8;
+}
