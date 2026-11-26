@@ -29,6 +29,8 @@ npm run eval:template      # local templates only
 npm run eval:mock          # deterministic compliant stand-in (NOT a model)
 npm run eval:mock-unsafe   # deterministic unsafe stand-in; proves the checks catch failures
 npm run eval:probes        # probes the production validator with fictional drafts
+npm run eval:heldout       # Phase 9 held-out set: legacy vs Phase 9 validator, templates before/after
+npm run eval:postfix       # Phase 9 post-fix probes (written after the fixes, not used for tuning)
 npm run eval:cost          # cost ESTIMATES from verified list prices + stated assumptions
 ```
 

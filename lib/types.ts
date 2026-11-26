@@ -56,7 +56,8 @@ export type Submission = {
   note: string;
 };
 
-export type DraftSource = "openai" | "anthropic" | "template" | "local";
+/** "local" is kept for drafts saved before Phase 9 (connection failure). New drafts use the per-message origin. */
+export type DraftSource = "openai" | "anthropic" | "template" | "local" | "rejected_ai_output" | "api_failure_fallback";
 
 export type DraftFallback = "timeout" | "offline" | "server" | null;
 

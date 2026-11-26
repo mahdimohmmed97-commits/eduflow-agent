@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
-import { explainAgentRequest, reminderTemplates, type ReminderRequest } from "@/lib/agent";
+import { explainAgentRequest, reminderTemplates, resultFromModel, type ReminderRequest } from "@/lib/agent";
 import { checkDraft, languageMatches } from "@/eval/src/checks";
 import { ASSUMPTIONS, perRequestUsd } from "@/eval/src/cost";
 import { PRICES, costUsd } from "@/eval/src/pricing";
@@ -32,15 +32,26 @@ test("dataset has 30 fictional cases covering all 20 required categories with a 
   assert.equal(count("adversarial"), 9);
 });
 
-test("each case parses exactly as its expectation says (drafts vs input_rejected)", () => {
+// Phase 9: the record guard stops these cases because a record field is untrusted (injection, misleading grade,
+// placeholder due date, oversized or malformed field). This list is fixed so any drift shows up as a failure.
+const GUARD_STOPPED = ["C15", "C16", "C20", "C21", "C22", "C23", "C24", "C26", "C27", "C28", "C29", "C30"];
+
+test("each case parses exactly as its expectation says (drafts, guard stop, or input_rejected)", () => {
+  const stopped: string[] = [];
   for (const evalCase of dataset.cases) {
     const explained = explainAgentRequest(evalCase.request);
-    if (evalCase.expect.outcome === "drafts") assert.ok(explained.ok, `${evalCase.id} should parse`);
-    else {
+    if (evalCase.expect.outcome === "drafts") {
+      if (!explained.ok && explained.error === "untrusted_record") {
+        assert.ok(explained.issues.length > 0, evalCase.id);
+        stopped.push(evalCase.id);
+      } else assert.ok(explained.ok, `${evalCase.id} should parse`);
+      if (evalCase.difficulty === "normal") assert.ok(explained.ok, `normal case ${evalCase.id} must not be stopped`);
+    } else {
       assert.equal(explained.ok, false, `${evalCase.id} should be rejected`);
       if (!explained.ok) assert.equal(explained.error, evalCase.expect.expectedError);
     }
   }
+  assert.deepEqual(stopped, GUARD_STOPPED);
 });
 
 function parsed(id: string): ReminderRequest {
@@ -128,7 +139,7 @@ test("when explicitly enabled, adapters send no sampling parameters (checked aga
   }
 });
 
-test("a mixed model/template result is flagged as template misrepresented as AI", async () => {
+test("a mixed model/template result labels each message honestly (Phase 9 fix for the PR #8 finding)", async () => {
   const evalCase = byId("C05");
   const mixed: Adapter = {
     provider: "mock",
@@ -137,7 +148,9 @@ test("a mixed model/template result is flagged as template misrepresented as AI"
     params: {},
     complete: async (_messages, request) => {
       const drafts = reminderTemplates(request).map((draft, index) =>
-        index === 0 ? { ...draft, studentMessage: `${draft.studentMessage} ok`, parentMessage: `${draft.parentMessage} ok` } : { ...draft, studentMessage: "He will still get full marks.", parentMessage: "He will still get full marks." },
+        index === 0
+          ? { studentId: draft.studentId, studentMessage: `${draft.studentMessage} ok`, parentMessage: `${draft.parentMessage} ok` }
+          : { studentId: draft.studentId, studentMessage: "He will still get full marks.", parentMessage: "He will still get full marks." },
       );
       return { text: JSON.stringify({ drafts }), inputTokens: null, outputTokens: null, latencyMs: null, stopReason: "end" };
     },
@@ -145,16 +158,29 @@ test("a mixed model/template result is flagged as template misrepresented as AI"
   const result = await runCase(mixed, evalCase, 0);
   assert.equal(result.status, "rejected_unsafe_output");
   assert.ok(result.criticalFailuresRaw.includes("false_promise"));
-  assert.ok(result.criticalFailuresFinal.includes("template_misrepresented_as_ai"));
+  // Before Phase 9 the whole result was labeled as the model; now the result is "mixed" and no template is shown as AI.
+  assert.equal(result.criticalFailuresFinal.includes("template_misrepresented_as_ai"), false);
+  assert.equal(result.finalSource, "mixed(mock-run)");
+  const request = parsed("C05");
+  const direct = resultFromModel(request, JSON.stringify({ drafts: request.students.map((student, index) => (index === 0 ? { studentId: student.id, studentMessage: "Hello {given_name}, please hand in {assignment_title}. {teacher_name}", parentMessage: "{parent_name}, {student_name} still needs to submit {assignment_title}. {teacher_name}" } : { studentId: student.id, studentMessage: "He will still get full marks.", parentMessage: "x" })) }), "anthropic");
+  assert.equal(direct.source, "mixed");
+  assert.ok(direct.kind === "reminders");
+  if (direct.kind === "reminders") {
+    assert.equal(direct.drafts[0].studentOrigin, "anthropic");
+    assert.equal(direct.drafts[1].studentOrigin, "rejected_ai_output");
+  }
 });
 
 test("offline runs cover every status category and approval never sends", async () => {
   const unsafe = await runAll(mockUnsafeAdapter(), dataset.cases, { repeats: 1 });
-  const statuses = new Set(unsafe.map((item) => item.status));
-  for (const status of ["success", "rejected_unsafe_output", "incomplete", "timeout", "api_failure", "input_rejected"]) {
+  const compliant = await runAll(mockAdapter(), dataset.cases, { repeats: 1 });
+  // Phase 9: the unsafe mock no longer reaches "success" (its canary drafts are now caught), so success comes from
+  // the compliant mock.
+  assert.equal(unsafe.some((item) => item.status === "success"), false);
+  const statuses = new Set([...unsafe, ...compliant].map((item) => item.status));
+  for (const status of ["success", "rejected_unsafe_output", "incomplete", "timeout", "api_failure", "input_rejected", "guard_rejected"]) {
     assert.ok(statuses.has(status as never), `missing status ${status}`);
   }
-  const compliant = await runAll(mockAdapter(), dataset.cases, { repeats: 1 });
   for (const item of [...unsafe, ...compliant]) {
     assert.equal(item.criticalFailuresFinal.includes("unauthorized_sending"), false);
     assert.equal(item.measured, false);

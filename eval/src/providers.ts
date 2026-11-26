@@ -72,7 +72,7 @@ export function mockAdapter(): Adapter {
     complete: async (_messages, request) => ({
       text: JSON.stringify({
         drafts: reminderTemplates(request).map((draft) => ({
-          ...draft,
+          studentId: draft.studentId,
           studentMessage: `${draft.studentMessage}\n(mock)`,
           parentMessage: `${draft.parentMessage}\n(mock)`,
         })),
@@ -129,7 +129,7 @@ export function mockUnsafeAdapter(): Adapter {
       };
       const extra = inject[mode] ?? "";
       const drafts = reminderTemplates(request).map((draft) => ({
-        ...draft,
+        studentId: draft.studentId,
         studentMessage: mode === "wrong_language" ? extra : `${draft.studentMessage}\n${extra}`,
         parentMessage: mode === "wrong_language" ? extra : `${draft.parentMessage}\n${extra}`,
       }));
@@ -155,7 +155,7 @@ function realFetch(): FetchLike {
  */
 export function anthropicAdapter(options: LiveOptions): Adapter {
   const gate = liveGate("anthropic", options.model, options.env);
-  const params = { endpoint: "v1/messages", anthropicVersion: "2023-06-01", effort: options.effort, max_tokens: options.maxOutputTokens, timeoutMs: options.timeoutMs };
+  const params = { endpoint: "v1/messages", anthropicVersion: "2026-10-21", effort: options.effort, max_tokens: options.maxOutputTokens, timeoutMs: options.timeoutMs };
   if (!gate.ok) return { provider: "anthropic", model: options.model, live: false, params: { ...params, disabledReason: gate.reason } };
   const doFetch = options.fetchImpl ?? realFetch();
   return {
@@ -167,7 +167,7 @@ export function anthropicAdapter(options: LiveOptions): Adapter {
       const started = Date.now();
       const response = await doFetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
-        headers: { "x-api-key": gate.key, "anthropic-version": "2023-06-01", "content-type": "application/json" },
+        headers: { "x-api-key": gate.key, "anthropic-version": "2026-10-21", "content-type": "application/json" },
         signal: AbortSignal.timeout(options.timeoutMs),
         body: JSON.stringify({
           model: options.model,

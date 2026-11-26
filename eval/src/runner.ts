@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import {
   explainAgentRequest,
+  renderSlots,
   localResult,
   messagesFor,
   reminderTemplates,
@@ -16,7 +17,8 @@ import { scoreDrafts, weighted } from "./scoring";
 import type { CaseResult, CriticalFailure, DraftCheck, EvalCase, RunStatus } from "./types";
 
 /** P1 = the production prompt from lib/agent.ts messagesFor(), unchanged, at commit af2467d. */
-export const PROMPT_VERSION = "P1-production-messagesFor@af2467d";
+import { PROMPT_VERSION } from "@/lib/agent";
+export { PROMPT_VERSION };
 
 function sha256(value: string): string {
   return createHash("sha256").update(value).digest("hex");
@@ -94,12 +96,15 @@ export async function runCase(adapter: Adapter, evalCase: EvalCase, caseIndex: n
   if (!explained.ok || explained.request.kind !== "reminders") {
     const expected = evalCase.expect.outcome === "input_rejected";
     const error = explained.ok ? "not_a_reminder_request" : explained.error;
+    // Phase 9 record guard: untrusted record data stops the request before any template or model sees it.
+    const guarded = !explained.ok && explained.error === "untrusted_record";
+    const issues = guarded ? explained.issues.map((issue) => `${issue.field}${issue.studentId ? `(${issue.studentId})` : ""}:${issue.reason}`).join(", ") : "";
     return {
       ...base,
       promptSha256: null,
-      status: expected ? "input_rejected" : "unexpected_input_rejection",
+      status: expected ? "input_rejected" : guarded ? "guard_rejected" : "unexpected_input_rejection",
       rawOutput: null,
-      errorDetail: expected && evalCase.expect.expectedError && evalCase.expect.expectedError !== error ? `expected ${evalCase.expect.expectedError}, got ${error}` : error,
+      errorDetail: guarded ? `untrusted_record: ${issues}` : expected && evalCase.expect.expectedError && evalCase.expect.expectedError !== error ? `expected ${evalCase.expect.expectedError}, got ${error}` : error,
       rawChecks: [],
       finalChecks: [],
       finalSource: null,
@@ -154,7 +159,8 @@ export async function runCase(adapter: Adapter, evalCase: EvalCase, caseIndex: n
           const draft = parsed.drafts.find((item) => item.studentId === student.id);
           return typeof draft?.studentMessage === "string" && draft.studentMessage.trim() && typeof draft.parentMessage === "string" && draft.parentMessage.trim();
         });
-      const fromTemplate = finalDrafts.reduce((sum, draft, index) => sum + (draft.studentMessage === templates[index]?.studentMessage ? 1 : 0) + (draft.parentMessage === templates[index]?.parentMessage ? 1 : 0), 0);
+      const isModel = (origin: string) => origin === "anthropic" || origin === "openai";
+      const fromTemplate = finalDrafts.reduce((sum, draft) => sum + (isModel(draft.studentOrigin) || draft.studentOrigin === "blocked" ? 0 : 1) + (isModel(draft.parentOrigin) || draft.parentOrigin === "blocked" ? 0 : 1), 0);
       if (completion.stopReason === "max_tokens" || completion.stopReason === "length" || !complete) status = "incomplete";
       else if (fromTemplate > 0) status = "rejected_unsafe_output";
       else status = "success";
@@ -169,6 +175,14 @@ export async function runCase(adapter: Adapter, evalCase: EvalCase, caseIndex: n
   }
 
   const parsed = rawDrafts(rawOutput);
+  // Placeholders such as {student_name} are filled from the record before raw checks, the same deterministic step
+  // the app applies. An unknown placeholder is left as written and is judged as raw text.
+  parsed.drafts = parsed.drafts.map((draft) => {
+    const student = request.students.find((item) => item.id === draft.studentId);
+    if (!student) return draft;
+    const fill = (text: unknown) => (typeof text === "string" ? (renderSlots(text, request, student) ?? text) : text);
+    return { ...draft, studentMessage: fill(draft.studentMessage) as string, parentMessage: fill(draft.parentMessage) as string };
+  });
   const rawChecks = rawOutput === null ? [] : checkSet(request, evalCase, parsed.drafts);
   const finalChecks = checkSet(request, evalCase, finalDrafts);
 
@@ -177,10 +191,17 @@ export async function runCase(adapter: Adapter, evalCase: EvalCase, caseIndex: n
   let fromTemplate = 0;
   finalDrafts.forEach((draft, index) => {
     for (const audience of ["studentMessage", "parentMessage"] as const) {
-      const isTemplate = draft[audience] === templates[index]?.[audience];
+      const origin = audience === "studentMessage" ? draft.studentOrigin : draft.parentOrigin;
+      if (origin === "blocked") continue;
+      // Phase 9: each message carries its own origin. It is misrepresented when the text is the local template but
+      // the message (or the whole result) is labeled as a model.
+      // A model that returns text identical to the template is still the model's answer, so origin decides.
+      void index;
+      const isTemplate = origin !== "anthropic" && origin !== "openai";
       if (isTemplate) fromTemplate += 1;
       else fromModel += 1;
-      if (isTemplate && finalSource !== "template") {
+      const labeledAsModel = origin === "anthropic" || origin === "openai" || /^(anthropic|openai)/.test(finalSource);
+      if (isTemplate && labeledAsModel) {
         const check = finalChecks.find((item) => item.studentId === draft.studentId && item.audience === (audience === "studentMessage" ? "student" : "parent"));
         if (check && !check.critical.includes("template_misrepresented_as_ai")) check.critical.push("template_misrepresented_as_ai");
       }
